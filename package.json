@@ -1,0 +1,20 @@
+{
+  "name": "invisit-sdk",
+  "private": true,
+  "license": "MIT",
+  "packageManager": "bun@1.4.4",
+  "workspaces": [
+    "apps/tracker",
+    "packages/web",
+    "packages/server"
+  ],
+  "scripts": {
+    "tracker:build": "bun scripts/build-tracker.ts",
+    "build": "bun run tracker:build && bun run --filter \"@invisitdev/*\" build"
+  },
+  "devDependencies": {
+    "oxc-minify": "0.155.0",
+    "oxc-transform": "0.155.0",
+    "@types/bun": "1.4.4"
+  }
+}

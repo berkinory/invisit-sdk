@@ -1,0 +1,32 @@
+{
+  "name": "@invisitdev/web",
+  "version": "0.2.1",
+  "private": false,
+  "description": "The invisit browser tracker as an ES module: privacy-first analytics for any framework.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/berkinory/invisit-sdk.git",
+    "directory": "packages/web"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "bun ../../scripts/build-web-sdk.ts"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@invisit/tracker": "workspace:*"
+  }
+}

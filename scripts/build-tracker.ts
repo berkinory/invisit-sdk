@@ -1,0 +1,113 @@
+import { brotliCompressSync, constants as zlib, gzipSync } from 'node:zlib'
+import { join } from 'node:path'
+import { minifySync } from 'oxc-minify'
+import { SCRIPT_MANGLE_PROPS, TARGET } from './tracker-mangle.ts'
+
+const SRC_DIR = join(import.meta.dir, '..', 'apps', 'tracker', 'src')
+const OUT_DIR = join(import.meta.dir, '..', 'apps', 'tracker', 'bundle')
+
+type Sizes = { raw: number; gzip: number; brotli: number }
+
+const BUNDLES: { entry: string; file: string; budgets: Sizes }[] = [
+  { entry: 'browser.ts', file: 'invisit.js', budgets: { raw: 20_992, gzip: 8_768, brotli: 7_936 } },
+  {
+    entry: 'rules-browser.ts',
+    file: 'invisit-rules.js',
+    budgets: { raw: 3_776, gzip: 1_856, brotli: 1_680 },
+  },
+  {
+    entry: 'extras-browser.ts',
+    file: 'invisit-extras.js',
+    budgets: { raw: 2_080, gzip: 1_152, brotli: 1_056 },
+  },
+  {
+    entry: 'notices-browser.ts',
+    file: 'invisit-notices.js',
+    budgets: { raw: 1_280, gzip: 832, brotli: 640 },
+  },
+  {
+    entry: 'interactions-browser.ts',
+    file: 'invisit-interactions.js',
+    budgets: { raw: 2_752, gzip: 1_536, brotli: 1_344 },
+  },
+  {
+    entry: 'feedback-browser.ts',
+    file: 'invisit-feedback.js',
+    budgets: { raw: 8_448, gzip: 3_712, brotli: 3_200 },
+  },
+  {
+    entry: 'overlay-browser.ts',
+    file: 'invisit-overlay.js',
+    budgets: { raw: 22_528, gzip: 9_216, brotli: 8_192 },
+  },
+]
+
+export const TRACKER_BANNER =
+  '/*! Invisit tracker. MIT licensed: github.com/berkinory/invisit-sdk/blob/main/apps/tracker/LICENSE */'
+
+async function bundle(entry: string): Promise<Uint8Array> {
+  const result = await Bun.build({
+    entrypoints: [join(SRC_DIR, entry)],
+    target: 'browser',
+    format: 'iife',
+    minify: true,
+  })
+  const [output] = result.outputs
+  if (!result.success || !output) throw new AggregateError(result.logs, `${entry} did not build`)
+  const minified = minifySync(entry, await output.text(), {
+    compress: { target: TARGET },
+    mangle: { toplevel: true },
+    mangleProps: SCRIPT_MANGLE_PROPS,
+    codegen: { removeWhitespace: true },
+  })
+  if (minified.errors.length > 0) {
+    throw new AggregateError(minified.errors, `${entry} did not minify`)
+  }
+  // Non-ASCII only survives in string and regex literals, where \u escapes are
+  // equivalent; escaping keeps the bundles correct on pages not served as UTF-8.
+  const ascii = minified.code.replace(
+    /[^ -~\t\n\r]/g,
+    (char) => `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`,
+  )
+  return new TextEncoder().encode(`${TRACKER_BANNER}\n"use strict";${ascii}`)
+}
+
+function measure(bytes: Uint8Array): Sizes {
+  return {
+    raw: bytes.byteLength,
+    gzip: gzipSync(bytes, { level: 9 }).byteLength,
+    brotli: brotliCompressSync(bytes, {
+      params: {
+        [zlib.BROTLI_PARAM_QUALITY]: zlib.BROTLI_MAX_QUALITY,
+        [zlib.BROTLI_PARAM_MODE]: zlib.BROTLI_MODE_TEXT,
+        [zlib.BROTLI_PARAM_SIZE_HINT]: bytes.byteLength,
+      },
+    }).byteLength,
+  }
+}
+
+const format = (bytes: number) => `${(bytes / 1024).toFixed(2)} KiB (${bytes} B)`
+const failures: string[] = []
+
+for (const { entry, file, budgets } of BUNDLES) {
+  const bytes = await bundle(entry)
+  await Bun.write(join(OUT_DIR, file), bytes)
+  const sizes = measure(bytes)
+  for (const kind of ['raw', 'gzip', 'brotli'] as const) {
+    const [used, budget] = [sizes[kind], budgets[kind]]
+    const share = `${((used / budget) * 100).toFixed(0)}%`
+    console.log(
+      `[tracker] ${file.padEnd(13)} ${kind.padEnd(6)} ${format(used)}  of ${format(budget)}  ${share}`,
+    )
+    if (used > budget) failures.push(`${file} ${kind} is ${format(used)}, over ${format(budget)}`)
+  }
+}
+
+if (failures.length > 0) {
+  console.error(`\n[tracker] size budget exceeded:\n${failures.map((f) => `  - ${f}`).join('\n')}`)
+  console.error(
+    '\nMake it smaller, or raise the budget here with the measurement that justifies it.',
+  )
+  process.exit(1)
+}
+console.log('[tracker] within budget')

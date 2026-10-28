@@ -1,0 +1,42 @@
+{
+  "name": "@invisitdev/server",
+  "version": "0.2.1",
+  "private": false,
+  "description": "invisit on your server: a first-party tracker proxy, crawler reads and server-side events, on web-standard Request and Response.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/berkinory/invisit-sdk.git",
+    "directory": "packages/server"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "default": "./dist/node.js"
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "bun ../../scripts/build-server-sdk.ts"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2"
+  },
+  "dependencies": {
+    "isbot": "^5.2.2"
+  }
+}

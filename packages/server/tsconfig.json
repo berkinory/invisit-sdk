@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM"],
+    // Node's types only for the ./node adapter; the main entry stays on web standards.
+    "types": ["node"],
+    // The declarations are emitted file by file (oxc-transform), so the source must allow it.
+    "declaration": true,
+    "isolatedDeclarations": true
+  },
+  "include": ["src"]
+}

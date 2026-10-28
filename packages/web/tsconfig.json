@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM"],
+    "types": [],
+    // The declarations are emitted file by file (oxc-transform), so the source must allow it.
+    "declaration": true,
+    "isolatedDeclarations": true
+  },
+  "include": ["src"]
+}
