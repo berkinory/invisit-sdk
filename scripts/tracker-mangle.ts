@@ -30,6 +30,8 @@ export const INTERNAL_PROPS = [
   'onRouteChange',
   'onUnknownSite',
   'onNavigate',
+  'onBeforeNavigate',
+  'ownDomains',
   'measureScroll',
   'intervalSeconds',
   'mayCollect',

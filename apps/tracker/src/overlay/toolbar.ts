@@ -194,6 +194,11 @@ export function createToolbar(doc: Document, actions: ToolbarActions) {
       nodes.push(line('', `Nothing recorded ${scope}`))
     } else {
       nodes.push(stat(formatCount(clicks), ` click${clicks === 1 ? '' : 's'}`))
+      const { rage_clicks: rage, dead_clicks: dead } = data.totals
+      if (rage > 0)
+        nodes.push(dot(), stat(formatCount(rage), ` rage click${rage === 1 ? '' : 's'}`))
+      if (dead > 0)
+        nodes.push(dot(), stat(formatCount(dead), ` dead click${dead === 1 ? '' : 's'}`))
       if (scroll)
         nodes.push(dot(), stat(`${Math.round(scroll.average_percent)}%`, ' average depth'))
       if (state.missing > 0)

@@ -25,7 +25,7 @@ export function unallowedHostMessage(input: {
 
   return (
     `[invisit] Tag loaded on ${input.host}, which is not on this site's allowed domains ` +
-    `(${domains}). Add it under Settings → Domains, or open the site at ${input.allowedDomains[0] ?? ''}.`
+    `(${domains}). Add it under Settings → Collection → Allowed domains, or open the site at ${input.allowedDomains[0] ?? ''}.`
   )
 }
 

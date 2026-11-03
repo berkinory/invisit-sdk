@@ -4,6 +4,7 @@ import {
   PAGE_TITLE_MAX_LENGTH,
   EXTERNAL_USER_ID_MAX_LENGTH,
   ACTION_ID_MAX_LENGTH,
+  TITLE_WAIT_MS,
   TRACKER_SDK,
   TRACKER_VERSION,
 } from './constants.ts'
@@ -184,11 +185,19 @@ export function createTracker(options: TrackerOptions): Tracker {
   let lastPage: TrackerPage | undefined
   let viewSent = false
 
+  /* A router often sets a page's title just after its address: Astro's ClientRouter restores it
+     right after pushState and, on Back, swaps the page in after popstate. So a client-side page
+     view waits for the title to change, for at most TITLE_WAIT_MS, and goes out at once when
+     another event, another navigation or leaving the page comes first. */
+  let pendingView: (() => void) | undefined
+  const flushPendingView = (): void => pendingView?.()
+
   const emit = (
     type: TrackerEventType,
     extras: Partial<TrackerEvent> = {},
     options_: { immediate?: boolean } = {},
   ): boolean => {
+    if (type !== 'page_view') flushPendingView()
     if (!mayCollect()) {
       transport.cancelPending()
       signals.update()
@@ -244,8 +253,7 @@ export function createTracker(options: TrackerOptions): Tracker {
     })
   }
 
-  const emitPageview = (referrer: string): void => {
-    const page = currentPage()
+  const emitPageview = (referrer: string, page = currentPage()): void => {
     if (!page) return
     lastPageExcluded = excludedPath()
     lastPageUrl = page.url
@@ -351,8 +359,28 @@ export function createTracker(options: TrackerOptions): Tracker {
     pageHref: () => win.location?.href ?? '',
     outbound: options.outboundLinks !== false,
     downloads: options.fileDownloads !== false,
+    ownDomains: () => config.allowedDomains,
     emit: (match) => trackEvent(match.name, { url: match.url }, actions.actionId(), true),
   })
+
+  const pageviewOnTitle = (referrer: string, page: TrackerPage): void => {
+    lastPageUrl = page.url
+    const title = doc?.title
+    const observer = doc && new win.MutationObserver(() => doc.title !== title && send())
+    const send = (): void => {
+      if (pendingView !== send) return
+      pendingView = undefined
+      observer?.disconnect()
+      const settled = currentPage()
+      emitPageview(referrer, settled?.url === page.url ? settled : page)
+    }
+    pendingView = send
+    observer?.observe(doc!.documentElement, { childList: true, subtree: true, characterData: true })
+    ;(options.schedule ?? ((task: () => void, ms: number) => win.setTimeout(task, ms)))(
+      send,
+      TITLE_WAIT_MS,
+    )
+  }
 
   const onRouteChange = (pathOnly?: boolean): void => {
     const page = currentPage()
@@ -363,16 +391,21 @@ export function createTracker(options: TrackerOptions): Tracker {
       return
     }
 
+    flushPendingView()
     signals.collect(lastPage)
 
     const previous = lastPageExcluded ? '' : lastPageUrl
-    emitPageview(previous)
+    pageviewOnTitle(previous, page)
 
     startSignals()
     options.onRouteChange?.()
   }
 
-  const navigation = createNavigation({ window: win, onNavigate: onRouteChange })
+  const navigation = createNavigation({
+    window: win,
+    onBeforeNavigate: flushPendingView,
+    onNavigate: onRouteChange,
+  })
 
   const onPageShow = (event: Event): void => {
     if (!(event as PageTransitionEvent).persisted) return
@@ -399,6 +432,7 @@ export function createTracker(options: TrackerOptions): Tracker {
   }
 
   const leave = (): void => {
+    flushPendingView()
     if (left) return
     left = true
     reportVitalsAndFlush(true)
@@ -470,6 +504,8 @@ export function createTracker(options: TrackerOptions): Tracker {
     consent(state) {
       privacy.setConsent(state)
       startSignals()
+      // The page the banner was shown on has not been counted yet.
+      if (state === 'granted' && !viewSent) emitPageview(referrer)
     },
 
     feedback() {
@@ -509,6 +545,7 @@ export function createTracker(options: TrackerOptions): Tracker {
 
     stop() {
       stopped = true
+      flushPendingView()
       syncFeedback()
       transport.cancelPending(false)
       signals.stop()

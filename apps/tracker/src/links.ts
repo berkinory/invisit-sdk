@@ -11,10 +11,22 @@ export interface LinkMatch {
   readonly url: string
 }
 
+const dotted = (host: string): string => '.' + host.replace(/^www\./, '')
+
+/* A link stays on the site when it goes to the page's own host (www, port and scheme aside), a
+   host above or below it, or one of the site's allowed domains and their subdomains. */
+const onSite = (host: string, own: readonly string[]): boolean =>
+  own.some((domain) => {
+    const a = dotted(host)
+    const b = dotted(domain)
+    return a.endsWith(b) || b.endsWith(a)
+  })
+
 export function classifyLink(
   href: string,
   pageHref: string,
   enabled: { readonly outbound: boolean; readonly downloads: boolean },
+  domains: readonly string[] = [],
 ): LinkMatch | null {
   let target: URL
   let page: URL
@@ -30,7 +42,7 @@ export function classifyLink(
   if (enabled.downloads && DOWNLOAD_PATH.test(target.pathname)) {
     return { name: FILE_DOWNLOAD_EVENT, url }
   }
-  if (enabled.outbound && target.origin !== page.origin) {
+  if (enabled.outbound && !onSite(target.hostname, [page.hostname, ...domains])) {
     return { name: OUTBOUND_LINK_EVENT, url }
   }
   return null
@@ -41,6 +53,7 @@ export interface LinksDeps {
   readonly pageHref: () => string
   readonly outbound: boolean
   readonly downloads: boolean
+  readonly ownDomains: () => readonly string[]
   readonly emit: (match: LinkMatch) => void
 }
 
@@ -49,7 +62,7 @@ export function createLinks(deps: LinksDeps) {
     if (event.type === 'auxclick' && (event as MouseEvent).button !== 1) return
     const href = (event.target as Element | null)?.closest?.<HTMLAnchorElement>('a[href]')?.href
     if (typeof href !== 'string') return
-    const match = classifyLink(href, deps.pageHref(), deps)
+    const match = classifyLink(href, deps.pageHref(), deps, deps.ownDomains())
     if (match) deps.emit(match)
   }
 

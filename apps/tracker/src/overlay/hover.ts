@@ -35,9 +35,11 @@ export function createHover(win: Window) {
       shown = el
       const totals = elements.get(el)!
       const share = pageClicks > 0 ? Math.round((totals.clicks / pageClicks) * 100) : 0
+      const rage = totals.rage_clicks > 0 ? ` · ${plural(totals.rage_clicks, 'rage click')}` : ''
+      const dead = totals.dead_clicks > 0 ? ` · ${plural(totals.dead_clicks, 'dead click')}` : ''
       tip.replaceChildren(
         h(doc, 'b', {}, [plural(totals.clicks, 'click')]),
-        ` · ${share}% of page clicks`,
+        ` · ${share}% of page clicks${rage}${dead}`,
       )
     }
     box.style.cssText = `left:${rect.left - 3}px;top:${rect.top - 3}px;width:${rect.width + 6}px;height:${rect.height + 6}px`

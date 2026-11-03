@@ -63,6 +63,10 @@ export function startTracker(
     if (ignore.ignored) return
   }
 
+  // Playwright, Puppeteer, Selenium and other WebDriver clients set navigator.webdriver: tests and
+  // scrapers, not visitors. Debug mode still sends, so a test can check its own setup.
+  if (win.navigator?.webdriver && !options.debug) return
+
   if (options.siteId === '' || options.collectorUrl === '') {
     win.console?.warn?.('[invisit] missing site or collector; tracker not started')
     return

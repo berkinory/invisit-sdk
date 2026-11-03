@@ -105,14 +105,26 @@ export function createWebVitals(deps: WebVitalsDeps) {
 
   return {
     start(): void {
+      let navigation: { responseStart?: number; activationStart?: number } | undefined
+      try {
+        navigation = deps.host.performance?.getEntriesByType('navigation')?.[0] as
+          | typeof navigation
+          | undefined
+      } catch {}
+      // A prerendered page is timed from when the visitor opened it, as Chrome reports it.
+      const activation = navigation?.activationStart ?? 0
+      const sinceOpened = (time: number): number => Math.max(time - activation, 0)
+
       observe('largest-contentful-paint', { buffered: true }, (entries) => {
         const last = entries[entries.length - 1]
-        if (last) measured.set('LCP', last.startTime)
+        if (last) measured.set('LCP', sinceOpened(last.startTime))
       })
 
       observe('paint', { buffered: true }, (entries) => {
         for (const entry of entries) {
-          if (entry.name === 'first-contentful-paint') measured.set('FCP', entry.startTime)
+          if (entry.name === 'first-contentful-paint') {
+            measured.set('FCP', sinceOpened(entry.startTime))
+          }
         }
       })
 
@@ -139,14 +151,9 @@ export function createWebVitals(deps: WebVitalsDeps) {
       observe('event', { buffered: true, durationThreshold: 0 }, recordInteractions)
       observe('first-input', { buffered: true }, recordInteractions)
 
-      try {
-        const navigation = deps.host.performance?.getEntriesByType('navigation')?.[0] as
-          | { responseStart?: number }
-          | undefined
-        if (navigation && typeof navigation.responseStart === 'number' && !deps.since) {
-          measured.set('TTFB', navigation.responseStart)
-        }
-      } catch {}
+      if (navigation && typeof navigation.responseStart === 'number' && !deps.since) {
+        measured.set('TTFB', sinceOpened(navigation.responseStart))
+      }
     },
 
     report(): void {

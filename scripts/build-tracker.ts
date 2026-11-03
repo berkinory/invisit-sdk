@@ -9,7 +9,10 @@ const OUT_DIR = join(import.meta.dir, '..', 'apps', 'tracker', 'bundle')
 type Sizes = { raw: number; gzip: number; brotli: number }
 
 const BUNDLES: { entry: string; file: string; budgets: Sizes }[] = [
-  { entry: 'browser.ts', file: 'invisit.js', budgets: { raw: 20_992, gzip: 8_768, brotli: 7_936 } },
+  // Raised 2026-11-03 from 20,992 / 8,768 / 7,936 for page views that wait for the router's
+  // title, the automation check, the page view sent on consent and own-subdomain links: measured
+  // 20,900 / 8,836 / 7,974.
+  { entry: 'browser.ts', file: 'invisit.js', budgets: { raw: 21_248, gzip: 8_896, brotli: 8_064 } },
   {
     entry: 'rules-browser.ts',
     file: 'invisit-rules.js',

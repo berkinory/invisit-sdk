@@ -2,6 +2,9 @@ export interface NavigationDeps {
   readonly window: Pick<Window, 'addEventListener' | 'removeEventListener'> & {
     history?: History
   }
+  /* Runs before pushState changes the address. Routers also call replaceState while a page is
+     settling (Squarespace right after popstate), so that one does not count as leaving. */
+  readonly onBeforeNavigate?: () => void
   readonly onNavigate: (pathOnly?: boolean) => void
 }
 
@@ -17,6 +20,7 @@ export function createNavigation(deps: NavigationDeps) {
         original = { pushState: history.pushState, replaceState: history.replaceState }
         const wrap = (method: History['pushState'], pathOnly?: boolean): History['pushState'] =>
           function patched(this: History, ...args: Parameters<History['pushState']>) {
+            if (!pathOnly) deps.onBeforeNavigate?.()
             const result = method.apply(this, args)
             deps.onNavigate(pathOnly)
             return result
