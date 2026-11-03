@@ -9,7 +9,7 @@ export { clientIp } from './client-ip.ts'
 export { InvisitError } from './errors.ts'
 export type { Fetch } from './context.ts'
 export type { CrawlerOptions } from './crawlers.ts'
-export type { PropertyValue, TrackOptions, TrackResult } from './track.ts'
+export type { PropertyValue, TrackOptions, TrackResult, TrackVisitor } from './track.ts'
 
 const DEFAULT_BASE_URL = 'https://api.invisit.dev'
 const API_KEY_PREFIX = 'invisit_sk_'
@@ -53,7 +53,8 @@ export interface Invisit {
   /** Records the request as a crawler read when its user agent looks like one. Never rejects. */
   crawlers(request: Request, options?: CrawlerOptions): Promise<void>
   /**
-   * Sends a custom event for the visitor behind `options.request`. Rejects with an InvisitError
+   * Sends a custom event for the visitor behind `options.request`, or for `options.visitor` when
+   * there is no request of theirs. Rejects with an InvisitError
    * when the collector refuses it or cannot be reached.
    */
   track(name: string, options: TrackOptions): Promise<TrackResult>
@@ -62,6 +63,18 @@ export interface Invisit {
    * crawler reads in the background and resolves to null so your app answers it.
    */
   handle(request: Request, options?: HandleOptions): Promise<Response | null>
+}
+
+/* AbortSignal.timeout where the runtime has it; a timer-driven abort where it does not (some
+   isolate runtimes ship AbortController alone). */
+function timeoutSignal(ms: number): AbortSignal {
+  if (typeof AbortSignal.timeout === 'function') return AbortSignal.timeout(ms)
+  const controller = new AbortController()
+  setTimeout(
+    () => controller.abort(new DOMException('The collector timed out.', 'TimeoutError')),
+    ms,
+  )
+  return controller.signal
 }
 
 const reportError = (error: unknown): void => {
@@ -90,7 +103,7 @@ export function createInvisit(options: InvisitOptions): Invisit {
     fetch: (input, init) =>
       (options.fetch ?? globalThis.fetch)(input, {
         ...init,
-        signal: init.signal ?? AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+        signal: init.signal ?? timeoutSignal(UPSTREAM_TIMEOUT_MS),
       }),
     onError: (error) => {
       try {
@@ -120,7 +133,8 @@ export function createInvisit(options: InvisitOptions): Invisit {
     proxy: (request, proxyOptions) =>
       proxyRequest(withIp(proxyOptions?.ip), request, proxyOptions?.prefix),
     crawlers,
-    track: (name, trackOptions) => trackEvent(withIp(trackOptions.ip), name, trackOptions),
+    track: (name, trackOptions) =>
+      trackEvent(withIp(trackOptions.visitor ? null : trackOptions.ip), name, trackOptions),
     async handle(request, handleOptions) {
       const response = await proxyRequest(withIp(handleOptions?.ip), request, handleOptions?.prefix)
       if (response !== null) return response

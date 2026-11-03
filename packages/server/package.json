@@ -1,6 +1,6 @@
 {
   "name": "@invisitdev/server",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "private": false,
   "description": "invisit on your server: a first-party tracker proxy, crawler reads and server-side events, on web-standard Request and Response.",
   "license": "MIT",

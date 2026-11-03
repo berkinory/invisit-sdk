@@ -16,7 +16,7 @@
     },
     "packages/server": {
       "name": "@invisitdev/server",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "dependencies": {
         "isbot": "^5.2.2",
       },

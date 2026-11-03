@@ -1,3 +1,4 @@
+import { bareAddress } from './client-ip.ts'
 import { authorization, type Context } from './context.ts'
 import { errorFromResponse, InvisitError } from './errors.ts'
 
@@ -7,9 +8,7 @@ const LANGUAGE_MAX_LENGTH = 256
 /** A custom event property value. */
 export type PropertyValue = string | number | boolean | null
 
-export interface TrackOptions {
-  /** The visitor's request: their address, user agent, language and Sec-GPC come from it. */
-  readonly request: Request
+interface TrackFields {
   /** The page the event belongs to, when there is one. */
   readonly url?: string
   readonly properties?: Readonly<Record<string, PropertyValue>>
@@ -17,9 +16,33 @@ export interface TrackOptions {
   readonly userId?: string
   /** A UUID v7. Reuse it when retrying, so the event is counted once. Minted when absent. */
   readonly eventId?: string
-  /** The visitor's address when the request carries none in a header; see ProxyOptions.ip. */
-  readonly ip?: string | null
 }
+
+/**
+ * The visitor, when there is no request of theirs to hand over: a Convex action
+ * (`ctx.meta.getRequestMetadata()`), a queue consumer or a WebSocket server, that kept the
+ * address and user agent of the request that started the work.
+ */
+export interface TrackVisitor {
+  readonly ip: string
+  readonly userAgent: string
+  /** The visitor's Accept-Language, when known. */
+  readonly language?: string
+  /** True when the visitor's browser sent Sec-GPC: 1; the event is then not recorded. */
+  readonly gpc?: boolean
+}
+
+export type TrackOptions = TrackFields &
+  (
+    | {
+        /** The visitor's request: their address, user agent, language and Sec-GPC come from it. */
+        readonly request: Request
+        /** The visitor's address when the request carries none in a header; see ProxyOptions.ip. */
+        readonly ip?: string | null
+        readonly visitor?: never
+      }
+    | { readonly visitor: TrackVisitor; readonly request?: never; readonly ip?: never }
+  )
 
 export interface TrackResult {
   readonly accepted: number
@@ -40,25 +63,45 @@ function uuidV7(now: number = Date.now()): string {
   return `${value.slice(0, 8)}-${value.slice(8, 12)}-${value.slice(12, 16)}-${value.slice(16, 20)}-${value.slice(20)}`
 }
 
-function visitorOf(context: Context, request: Request) {
-  const ip = context.clientIp(request)
-  if (ip === null) {
-    throw new InvisitError(
-      'CLIENT_IP_UNRESOLVED',
-      'The visitor address could not be read from the request; pass `ip`, or clientIp to createInvisit.',
+function visitorOf(context: Context, options: TrackOptions) {
+  if (options.visitor) {
+    const { ip, userAgent, language, gpc } = options.visitor
+    return describeVisitor(
+      bareAddress(ip),
+      userAgent,
+      language ?? null,
+      gpc === true,
+      'The visitor address is not an IP address.',
     )
   }
+  const { request } = options
+  return describeVisitor(
+    context.clientIp(request),
+    request.headers.get('user-agent'),
+    request.headers.get('accept-language'),
+    request.headers.get('sec-gpc')?.trim() === '1',
+    'The visitor address could not be read from the request; pass `ip`, or clientIp to createInvisit.',
+  )
+}
+
+function describeVisitor(
+  ip: string | null,
+  rawUserAgent: string | null,
+  language: string | null,
+  gpc: boolean,
+  missingIp: string,
+) {
+  if (ip === null) throw new InvisitError('CLIENT_IP_UNRESOLVED', missingIp)
   // The collector needs one to tell people from bots; an event without it is refused whole.
-  const userAgent = request.headers.get('user-agent')?.trim()
+  const userAgent = rawUserAgent?.trim()
   if (!userAgent) {
-    throw new InvisitError('USER_AGENT_MISSING', 'The request carries no User-Agent.')
+    throw new InvisitError('USER_AGENT_MISSING', 'The visitor has no User-Agent.')
   }
-  const language = request.headers.get('accept-language')
   return {
     ip,
     user_agent: userAgent,
     ...(language ? { language: language.slice(0, LANGUAGE_MAX_LENGTH) } : {}),
-    ...(request.headers.get('sec-gpc')?.trim() === '1' ? { gpc: true } : {}),
+    ...(gpc ? { gpc: true } : {}),
   }
 }
 
@@ -69,7 +112,7 @@ export async function trackEvent(
 ): Promise<TrackResult> {
   const body = {
     schema_version: 1,
-    visitor: visitorOf(context, options.request),
+    visitor: visitorOf(context, options),
     events: [
       {
         event_id: options.eventId ?? uuidV7(),

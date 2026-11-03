@@ -175,7 +175,7 @@ export async function sendResponse(res: ServerResponse, response: Response): Pro
  * Express/Connect-style middleware: answers tracker requests under `prefix` from the collector
  * and hands every other request on with `next`, recording crawler reads with the status your app
  * answered once the response is finished. `next` is awaited, so one that returns a promise works.
- * Without `next` (Fastify's onRequest hook, a Koa wrapper), check `res.headersSent` afterwards to
+ * Without `next` (Fastify's onRequest hook), check `res.headersSent` afterwards to
  * know whether it answered.
  */
 export function middleware(
