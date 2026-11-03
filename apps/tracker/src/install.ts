@@ -55,7 +55,13 @@ export function installTracker(
   const existing = (win as unknown as Record<string, unknown>)['invisit']
   const conflict = isForeign(existing)
 
-  const tracker = createTracker({ ...options, window: win })
+  // A page that loads the script tag passes what an attribute cannot, a function, through the
+  // stub before the script arrives: invisit('pageUrl', href => ...). Read before the first page
+  // view, not with the rest of the queue.
+  const queued = isOurStub(existing) ? existing.q?.find((call) => call[0] === 'pageUrl') : undefined
+  const pageUrl =
+    typeof queued?.[1] === 'function' ? (queued[1] as TrackerOptions['pageUrl']) : undefined
+  const tracker = createTracker({ ...options, ...(pageUrl ? { pageUrl } : {}), window: win })
   let running = true
   const stop = tracker.stop
   tracker.stop = () => {
@@ -92,6 +98,7 @@ export type TrackerStartOptions = Pick<
   | 'outboundLinks'
   | 'fileDownloads'
   | 'excludePaths'
+  | 'pageUrl'
   | 'privacyPolicy'
 >
 

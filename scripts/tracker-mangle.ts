@@ -32,6 +32,7 @@ export const INTERNAL_PROPS = [
   'onNavigate',
   'onBeforeNavigate',
   'ownDomains',
+  'pageUrl',
   'measureScroll',
   'intervalSeconds',
   'mayCollect',

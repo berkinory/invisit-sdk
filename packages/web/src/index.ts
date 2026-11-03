@@ -19,6 +19,11 @@ export interface InitOptions {
   readonly fileDownloads?: boolean
   /** Paths never measured: exact ("/health") or a trailing wildcard ("/preview/*"). */
   readonly excludePaths?: readonly string[]
+  /** Rewrites each page address before it is recorded, for example to turn
+     "/orders/8121" into "/orders/:id" so a report groups one route instead of every id.
+     Gets the full URL and returns a full URL; query parameters and the fragment are
+     redacted afterwards as usual. */
+  readonly pageUrl?: (href: string) => string
   readonly respectGpc?: boolean
   readonly respectDnt?: boolean
   readonly requireConsent?: boolean
@@ -101,6 +106,7 @@ export function init(options: InitOptions): Tracker | undefined {
         ...(options.storage === undefined ? {} : { storage: options.storage }),
         ...(options.outboundLinks === undefined ? {} : { outboundLinks: options.outboundLinks }),
         ...(options.fileDownloads === undefined ? {} : { fileDownloads: options.fileDownloads }),
+        ...(options.pageUrl === undefined ? {} : { pageUrl: options.pageUrl }),
       },
       importChunk,
     )

@@ -85,6 +85,8 @@ export interface TrackerOptions {
   readonly outboundLinks?: boolean
   readonly fileDownloads?: boolean
   readonly excludePaths?: readonly string[]
+  /* Rewrites the address before it is recorded, as when ids in the path become placeholders. */
+  readonly pageUrl?: (href: string) => string
   readonly deferWebVitalsUntilConfig?: boolean
   readonly loadExtras?: (ready: (extras: TrackerExtras) => void) => void
   readonly loadRules?: (ready: (rules: TrackerRules) => void) => void
@@ -174,7 +176,8 @@ export function createTracker(options: TrackerOptions): Tracker {
   })
 
   const currentPage = (): TrackerPage | undefined => {
-    const url = sanitizeUrl(win.location?.href ?? '', config.redactQueryKeys)
+    const href = win.location?.href ?? ''
+    const url = sanitizeUrl(options.pageUrl?.(href) ?? href, config.redactQueryKeys)
     if (url === '') return undefined
     const title = doc?.title ?? ''
     return title === '' ? { url } : { url, title: truncate(title, PAGE_TITLE_MAX_LENGTH) }
