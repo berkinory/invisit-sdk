@@ -22,7 +22,8 @@ export interface InitOptions {
   /** Rewrites each page address before it is recorded, for example to turn
      "/orders/8121" into "/orders/:id" so a report groups one route instead of every id.
      Gets the full URL and returns a full URL; query parameters and the fragment are
-     redacted afterwards as usual. */
+     redacted afterwards as usual. A page whose path it changes opens nowhere, so it gets no
+     click heatmap. */
   readonly pageUrl?: (href: string) => string
   readonly respectGpc?: boolean
   readonly respectDnt?: boolean

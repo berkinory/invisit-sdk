@@ -1,6 +1,6 @@
 {
   "name": "@invisitdev/web",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": false,
   "description": "The invisit browser tracker as an ES module: privacy-first analytics for any framework.",
   "license": "MIT",

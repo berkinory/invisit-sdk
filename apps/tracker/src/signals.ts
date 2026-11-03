@@ -79,7 +79,7 @@ export function createSignals(deps: SignalsDeps) {
     else if (!interactionsRequested && deps.options.loadInteractions) {
       interactionsRequested = true
       deps.options.loadInteractions((chunk) => {
-        interactions = chunk.createInteractions(win)
+        interactions = chunk.createInteractions(win, deps.options.pageUrl)
         requestInteractions(!stopped && !paused && deps.config().features.heatmaps)
       })
     }

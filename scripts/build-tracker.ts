@@ -11,8 +11,9 @@ type Sizes = { raw: number; gzip: number; brotli: number }
 const BUNDLES: { entry: string; file: string; budgets: Sizes }[] = [
   // Raised 2026-11-03 from 20,992 / 8,768 / 7,936 for page views that wait for the router's
   // title, the automation check, the page view sent on consent and own-subdomain links: measured
-  // 20,900 / 8,836 / 7,974.
-  { entry: 'browser.ts', file: 'invisit.js', budgets: { raw: 21_248, gzip: 8_896, brotli: 8_064 } },
+  // 20,900 / 8,836 / 7,974. Raised 2026-11-04 for pageUrl and handing it to the click chunk:
+  // measured 21,028 / 8,901 / 8,050.
+  { entry: 'browser.ts', file: 'invisit.js', budgets: { raw: 21_248, gzip: 8_960, brotli: 8_064 } },
   {
     entry: 'rules-browser.ts',
     file: 'invisit-rules.js',
@@ -31,7 +32,9 @@ const BUNDLES: { entry: string; file: string; budgets: Sizes }[] = [
   {
     entry: 'interactions-browser.ts',
     file: 'invisit-interactions.js',
-    budgets: { raw: 2_752, gzip: 1_536, brotli: 1_344 },
+    // Raised 2026-11-04 from 2,752 / 1,536 / 1,344 to skip clicks on addresses pageUrl rewrote:
+    // measured 2,824 / 1,529 / 1,346.
+    budgets: { raw: 2_880, gzip: 1_536, brotli: 1_408 },
   },
   {
     entry: 'feedback-browser.ts',

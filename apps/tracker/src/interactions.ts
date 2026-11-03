@@ -25,7 +25,10 @@ interface Pending {
   readonly native: boolean
 }
 
-export function createInteractions(win: Window & typeof globalThis) {
+export function createInteractions(
+  win: Window & typeof globalThis,
+  pageUrl?: (href: string) => string,
+) {
   const doc = win.document
   let points: Point[] = []
   let recent: [at: number, x: number, y: number][] = []
@@ -82,6 +85,10 @@ export function createInteractions(win: Window & typeof globalThis) {
 
   const onClick = (event: MouseEvent): void => {
     if (!event.isTrusted || event.detail === 0 || points.length >= MAX_CLICKS) return
+    // A heatmap is drawn over the page opened at its recorded address. One that pageUrl rewrote
+    // beyond its query, such as a route template, opens no page to draw on.
+    const { href } = win.location
+    if (pageUrl && pageUrl(href).split(/[?#]/)[0] !== href.split(/[?#]/)[0]) return
     const origin = event.target as Element | null
     if (origin?.nodeType !== 1 || origin.closest('invisit-overlay,invisit-feedback')) return
     const target = origin.closest('svg') ?? origin
