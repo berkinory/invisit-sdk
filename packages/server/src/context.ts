@@ -5,6 +5,7 @@ export interface Context {
   /* Without a trailing slash, so paths append directly. */
   readonly baseUrl: string
   readonly clientIp: (request: Request) => string | null
+  readonly respectGpc: boolean
   readonly fetch: Fetch
   readonly onError: (error: unknown) => void
   readonly noteUnresolvedIp: () => void

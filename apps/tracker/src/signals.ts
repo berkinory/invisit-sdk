@@ -42,7 +42,7 @@ export function createSignals(deps: SignalsDeps) {
 
   let interval = deps.config().heartbeatIntervalSeconds
   let engagementOn = false
-  let extrasDeferred = deps.options.deferWebVitalsUntilConfig === true
+  let extrasDeferred = deps.options.awaitConfig === true
   let extrasRequested = false
   let extras: TrackerExtras | undefined
   let vitals: ReturnType<TrackerExtras['createWebVitals']> | undefined

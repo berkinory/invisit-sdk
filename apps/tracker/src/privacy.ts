@@ -14,9 +14,10 @@ export interface PrivacyPolicy {
   readonly requireConsent: boolean
 }
 
+/* Global Privacy Control and Do Not Track are the site's to honour: off unless it turns them on. */
 export const DEFAULT_PRIVACY_POLICY: PrivacyPolicy = {
-  respectGpc: true,
-  respectDnt: true,
+  respectGpc: false,
+  respectDnt: false,
   requireConsent: false,
 }
 

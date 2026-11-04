@@ -26,6 +26,9 @@ export interface InvisitOptions {
   readonly fetch?: Fetch
   /** Told about failures that are not thrown: proxy 502s and crawler hits that were not taken. */
   readonly onError?: (error: unknown) => void
+  /** Leaves out the events of visitors whose browser sends Global Privacy Control. Off unless
+     set. */
+  readonly respectGpc?: boolean
 }
 
 export interface ProxyOptions {
@@ -97,6 +100,7 @@ export function createInvisit(options: InvisitOptions): Invisit {
     key: options.key,
     baseUrl: (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, ''),
     clientIp: options.clientIp ?? clientIp,
+    respectGpc: options.respectGpc === true,
     // Called unbound and looked up per call: some runtimes reject fetch invoked on another
     // object, and a global replaced after startup (instrumentation, tests) is still used.
     // A hung collector must not hold the site's own request (Node waits 300 s by default).

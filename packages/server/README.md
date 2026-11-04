@@ -102,13 +102,14 @@ The site id is public. The API key never leaves your server.
 createInvisit(options: InvisitOptions): Invisit
 ```
 
-| Option     | Type                                   | Default                        | Description                                                                                                               |
-| ---------- | -------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| `key`      | `string`                               | **required**                   | An API key of the site with the ingest scope (`invisit_sk_…`).                                                            |
-| `baseUrl`  | `string`                               | `https://api.invisit.dev`      | The collector. Leave it unless invisit support gives you another address.                                                 |
-| `clientIp` | `(request: Request) => string \| null` | [`clientIp`](#clientiprequest) | Reads the visitor's address from a request. See [Visitor address](#visitor-address).                                      |
-| `fetch`    | `(input, init) => Promise<Response>`   | global `fetch`                 | The fetch used to reach the collector, e.g. for instrumentation.                                                          |
-| `onError`  | `(error: unknown) => void`             | `console.error`                | Receives failures that are not thrown: proxy 502s, crawler hits not accepted, and `CLIENT_IP_UNRESOLVED` once per client. |
+| Option       | Type                                   | Default                        | Description                                                                                                               |
+| ------------ | -------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `key`        | `string`                               | **required**                   | An API key of the site with the ingest scope (`invisit_sk_…`).                                                            |
+| `baseUrl`    | `string`                               | `https://api.invisit.dev`      | The collector. Leave it unless invisit support gives you another address.                                                 |
+| `clientIp`   | `(request: Request) => string \| null` | [`clientIp`](#clientiprequest) | Reads the visitor's address from a request. See [Visitor address](#visitor-address).                                      |
+| `fetch`      | `(input, init) => Promise<Response>`   | global `fetch`                 | The fetch used to reach the collector, e.g. for instrumentation.                                                          |
+| `onError`    | `(error: unknown) => void`             | `console.error`                | Receives failures that are not thrown: proxy 502s, crawler hits not accepted, and `CLIENT_IP_UNRESOLVED` once per client. |
+| `respectGpc` | `boolean`                              | `false`                        | Turned on, leaves out events of visitors whose browser sends Global Privacy Control.                                      |
 
 Requests to the collector time out after 10 seconds, so a slow collector never holds your own response for long.
 
@@ -766,7 +767,7 @@ Behavior worth knowing:
 
 - **Idempotency.** Every event gets a UUID v7 `event_id`. Pass your own `eventId` to make retries safe: the same id again is counted as a `duplicate`, not a second event.
 - **Validation.** Names, properties and URLs follow the browser tracker's rules: event names up to 64 characters, up to 32 properties, string values up to 256 characters.
-- **Bots and opt-outs.** A crawler user agent or `Sec-GPC: 1` is answered with `{ accepted: 0 }`, exactly as in the browser.
+- **Bots and opt-outs.** A crawler user agent is answered with `{ accepted: 0 }`, exactly as in the browser. So is a visitor sending `Sec-GPC: 1`, when `createInvisit` has `respectGpc` on.
 - **Never fail your route on analytics.** `track` rejects on any failure; always catch it where you call it. With Fastify, `.catch((error) => request.log.error(error))` keeps failures in your logs.
 
 ## Visitor address
@@ -848,7 +849,7 @@ The Node adapter adds `BODY_CONSUMED` (a body parser ran first) and `PAYLOAD_TOO
 ## Security
 
 - **The API key stays on your server.** It authenticates your server to the collector and is never included in a proxied response.
-- **The proxy forwards only what the collector reads:** user agent, language, origin, referer, `Sec-GPC`, `DNT`, Sec-Fetch and client hints. Cookies, `Authorization` and `Host` stay on your side, and `Set-Cookie` from upstream is dropped.
+- **The proxy forwards only what the collector reads:** user agent, language, origin, referer, Sec-Fetch and client hints. Cookies, `Authorization` and `Host` stay on your side, and `Set-Cookie` from upstream is dropped.
 - **The proxy is narrow.** Only tracker paths under the prefix are forwarded, only with GET, HEAD and POST, and bodies are capped at 1 MiB. Everything else is left to your app.
 - **Address headers are not trusted blindly** on Node unless you opt in with `trustProxy`. On other runtimes, see [Visitor address](#visitor-address).
 

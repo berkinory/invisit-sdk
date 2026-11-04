@@ -133,7 +133,7 @@ export function startTracker(
     ...options,
     ...fetchDeps,
     ...beaconDeps,
-    deferWebVitalsUntilConfig: true,
+    awaitConfig: true,
     loadExtras: (ready) => loadChunk('extras', ready),
     loadInteractions: (ready) => loadChunk('interactions', ready),
     loadFeedback: (ready) => loadChunk('feedback', ready),

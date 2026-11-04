@@ -2,6 +2,7 @@ import { TRACKER_NPM_SDK } from '@invisit/tracker/constants'
 import { importChunk } from '@invisit/tracker/import-chunks'
 import { applyQueued, runningTracker, type QueuedCall } from '@invisit/tracker/install'
 import { startTracker } from '@invisit/tracker/start'
+import { version as PACKAGE_VERSION } from '../package.json'
 
 /* The public types are written out here rather than re-exported, so the published declarations
    stand alone; the compiler still holds them to the tracker's own (init() returns one). */
@@ -25,8 +26,11 @@ export interface InitOptions {
      redacted afterwards as usual. A page whose path it changes opens nowhere, so it gets no
      click heatmap. */
   readonly pageUrl?: (href: string) => string
+  /** Leaves out browsers that send Global Privacy Control. Off unless set. */
   readonly respectGpc?: boolean
+  /** Leaves out browsers that send Do Not Track. Off unless set. */
   readonly respectDnt?: boolean
+  /** Measures nothing until consent("granted"). Off unless set. */
   readonly requireConsent?: boolean
 }
 
@@ -101,6 +105,7 @@ export function init(options: InitOptions): Tracker | undefined {
         siteId: options.site,
         collectorUrl: options.baseUrl ?? DEFAULT_BASE_URL,
         sdk: TRACKER_NPM_SDK,
+        sdkVersion: PACKAGE_VERSION,
         excludePaths: options.excludePaths ?? [],
         privacyPolicy,
         ...(options.debug === undefined ? {} : { debug: options.debug }),

@@ -93,6 +93,7 @@ export type TrackerStartOptions = Pick<
   | 'siteId'
   | 'collectorUrl'
   | 'sdk'
+  | 'sdkVersion'
   | 'debug'
   | 'storage'
   | 'outboundLinks'

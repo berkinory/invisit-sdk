@@ -24,6 +24,8 @@ export interface TransportDeps {
   readonly random?: () => number
   readonly onError?: ((reason: string) => void) | undefined
   readonly maySend?: () => boolean
+  /* While true, events wait in the buffer instead of going out; the page's exit still sends them. */
+  readonly held?: () => boolean
 }
 
 function endpoint(base: string, path: string): string {
@@ -202,6 +204,7 @@ export function createTransport(deps: TransportDeps) {
   const flush = (options: { beacon?: boolean } = {}): void => {
     flushScheduled = false
     if (!maySend()) return
+    if (options.beacon !== true && deps.held?.() === true) return
 
     // The page's exit is the queue's last chance, since nothing outlives the page; one beacon per
     // exit is no burden even while backing off.
@@ -250,7 +253,7 @@ export function createTransport(deps: TransportDeps) {
     },
 
     sendHeartbeat(payload: Omit<HeartbeatBody, 'schema_version' | 'site_id' | 'sent_at'>) {
-      if (!maySend()) return
+      if (!maySend() || deps.held?.() === true) return
       const serialized = serialize(payload)
 
       const beaconImpl = deps.beaconImpl

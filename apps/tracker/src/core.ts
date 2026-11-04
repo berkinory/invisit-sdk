@@ -4,6 +4,7 @@ import {
   PAGE_TITLE_MAX_LENGTH,
   EXTERNAL_USER_ID_MAX_LENGTH,
   ACTION_ID_MAX_LENGTH,
+  CONFIG_WAIT_MS,
   TITLE_WAIT_MS,
   TRACKER_SDK,
   TRACKER_VERSION,
@@ -78,6 +79,8 @@ export interface TrackerOptions {
   readonly siteId: string
   readonly collectorUrl: string
   readonly sdk?: TrackerContext['sdk']
+  /* The npm package reports its own release; the script tag reports the tracker's. */
+  readonly sdkVersion?: string
   readonly window?: Window & typeof globalThis
   readonly debug?: boolean
   readonly storage?: 'auto' | 'none'
@@ -87,7 +90,10 @@ export interface TrackerOptions {
   readonly excludePaths?: readonly string[]
   /* Rewrites the address before it is recorded, as when ids in the path become placeholders. */
   readonly pageUrl?: (href: string) => string
-  readonly deferWebVitalsUntilConfig?: boolean
+  /* The site's settings are on their way (applyConfig): nothing is sent until they land, or for
+     CONFIG_WAIT_MS at most, so a host they turn away (localhost, a preview deploy) sends nothing
+     unless the page is left before they arrive. */
+  readonly awaitConfig?: boolean
   readonly loadExtras?: (ready: (extras: TrackerExtras) => void) => void
   readonly loadRules?: (ready: (rules: TrackerRules) => void) => void
   readonly loadInteractions?: (ready: (chunk: TrackerInteractions) => void) => void
@@ -143,7 +149,7 @@ export function createTracker(options: TrackerOptions): Tracker {
 
   const context: TrackerContext = {
     sdk: options.sdk ?? TRACKER_SDK,
-    sdk_version: TRACKER_VERSION,
+    sdk_version: options.sdkVersion ?? TRACKER_VERSION,
   }
 
   let stopped = false
@@ -156,7 +162,15 @@ export function createTracker(options: TrackerOptions): Tracker {
     localStore.get(IGNORE_KEY) !== '1' &&
     !excludedPath()
 
+  const later = options.schedule ?? ((task: () => void, ms: number) => win.setTimeout(task, ms))
+  let awaitingConfig = options.awaitConfig === true
+  const release = (): void => {
+    if (!awaitingConfig) return
+    awaitingConfig = false
+    transport.flush()
+  }
   const transport = createTransport({
+    held: () => awaitingConfig,
     collectorUrl: options.collectorUrl,
     siteId: options.siteId,
     context,
@@ -379,10 +393,7 @@ export function createTracker(options: TrackerOptions): Tracker {
     }
     pendingView = send
     observer?.observe(doc!.documentElement, { childList: true, subtree: true, characterData: true })
-    ;(options.schedule ?? ((task: () => void, ms: number) => win.setTimeout(task, ms)))(
-      send,
-      TITLE_WAIT_MS,
-    )
+    later(send, TITLE_WAIT_MS)
   }
 
   const onRouteChange = (pathOnly?: boolean): void => {
@@ -475,6 +486,7 @@ export function createTracker(options: TrackerOptions): Tracker {
     startSignals()
     syncFeedback()
 
+    if (awaitingConfig) later(release, CONFIG_WAIT_MS)
     transport.flush()
   }
 
@@ -539,6 +551,7 @@ export function createTracker(options: TrackerOptions): Tracker {
       } else if (next.noCodeRules) {
         ruleEngine?.onRulesChanged()
       }
+      release()
     },
 
     flush() {
@@ -561,6 +574,6 @@ export function createTracker(options: TrackerOptions): Tracker {
       doc?.removeEventListener('visibilitychange', onVisibility)
     },
 
-    version: TRACKER_VERSION,
+    version: context.sdk_version,
   }
 }

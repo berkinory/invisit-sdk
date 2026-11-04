@@ -28,7 +28,8 @@ export interface TrackVisitor {
   readonly userAgent: string
   /** The visitor's Accept-Language, when known. */
   readonly language?: string
-  /** True when the visitor's browser sent Sec-GPC: 1; the event is then not recorded. */
+  /** True when the visitor's browser sent Sec-GPC: 1; the event is then not recorded when
+     createInvisit has `respectGpc` on. */
   readonly gpc?: boolean
 }
 
@@ -70,7 +71,7 @@ function visitorOf(context: Context, options: TrackOptions) {
       bareAddress(ip),
       userAgent,
       language ?? null,
-      gpc === true,
+      context.respectGpc && gpc === true,
       'The visitor address is not an IP address.',
     )
   }
@@ -79,7 +80,7 @@ function visitorOf(context: Context, options: TrackOptions) {
     context.clientIp(request),
     request.headers.get('user-agent'),
     request.headers.get('accept-language'),
-    request.headers.get('sec-gpc')?.trim() === '1',
+    context.respectGpc && request.headers.get('sec-gpc')?.trim() === '1',
     'The visitor address could not be read from the request; pass `ip`, or clientIp to createInvisit.',
   )
 }

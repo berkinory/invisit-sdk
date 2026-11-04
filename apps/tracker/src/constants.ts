@@ -12,6 +12,8 @@ export const REFERRER_MAX_LENGTH = 1024
 export const PAGE_TITLE_MAX_LENGTH = 256
 /* How long a client-side page view waits for the router to set the new page's title. */
 export const TITLE_WAIT_MS = 2_000
+/* How long events wait for the site's settings before they go out regardless. */
+export const CONFIG_WAIT_MS = 3_000
 const SELECTOR_MAX_LENGTH = 256
 export const ELEMENT_TEXT_MAX_LENGTH = 128
 export const EXTERNAL_USER_ID_MAX_LENGTH = 128

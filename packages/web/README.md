@@ -70,18 +70,18 @@ init({
 })
 ```
 
-| Option           | Type                | Default                   | Description                                                                                          |
-| ---------------- | ------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `site`           | `string`            | **required**              | The site id, from Settings → Installation.                                                           |
-| `baseUrl`        | `string`            | `https://api.invisit.dev` | The collector: the invisit cloud, or a [first-party proxy](#first-party-proxy) path such as `'/_i'`. |
-| `debug`          | `boolean`           | `false`                   | Logs delivery problems and repeated `init()` calls to the console.                                   |
-| `storage`        | `'auto' \| 'none'`  | `'auto'`                  | `'none'` keeps nothing at all on the device, not even the consent answer.                            |
-| `outboundLinks`  | `boolean`           | `true`                    | Records clicks on links to other sites.                                                              |
-| `fileDownloads`  | `boolean`           | `true`                    | Records clicks on file downloads.                                                                    |
-| `excludePaths`   | `readonly string[]` | `[]`                      | Paths never measured: exact (`'/health'`) or with a trailing wildcard (`'/admin/*'`).                |
-| `respectGpc`     | `boolean`           | `true`                    | Stops measuring for browsers that send [Global Privacy Control](https://globalprivacycontrol.org).   |
-| `respectDnt`     | `boolean`           | `true`                    | Stops measuring for browsers that send Do Not Track.                                                 |
-| `requireConsent` | `boolean`           | `false`                   | Sends nothing until [`consent('granted')`](#consentstate) is called.                                 |
+| Option           | Type                | Default                   | Description                                                                                                   |
+| ---------------- | ------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `site`           | `string`            | **required**              | The site id, from Settings → Installation.                                                                    |
+| `baseUrl`        | `string`            | `https://api.invisit.dev` | The collector: the invisit cloud, or a [first-party proxy](#first-party-proxy) path such as `'/_i'`.          |
+| `debug`          | `boolean`           | `false`                   | Logs delivery problems and repeated `init()` calls to the console.                                            |
+| `storage`        | `'auto' \| 'none'`  | `'auto'`                  | `'none'` keeps nothing at all on the device, not even the consent answer.                                     |
+| `outboundLinks`  | `boolean`           | `true`                    | Records clicks on links to other sites.                                                                       |
+| `fileDownloads`  | `boolean`           | `true`                    | Records clicks on file downloads.                                                                             |
+| `excludePaths`   | `readonly string[]` | `[]`                      | Paths never measured: exact (`'/health'`) or with a trailing wildcard (`'/admin/*'`).                         |
+| `respectGpc`     | `boolean`           | `false`                   | Turned on, stops measuring for browsers that send [Global Privacy Control](https://globalprivacycontrol.org). |
+| `respectDnt`     | `boolean`           | `false`                   | Turned on, stops measuring for browsers that send Do Not Track.                                               |
+| `requireConsent` | `boolean`           | `false`                   | Sends nothing until [`consent('granted')`](#consentstate) is called.                                          |
 
 Everything else (allowed domains, redacted query keys, web vitals, heatmaps, no-code rules, the feedback widget) is configured per site in the dashboard and fetched by the tracker at runtime. No redeploy needed.
 
@@ -224,7 +224,7 @@ init({ site: '<site id>', requireConsent: true })
 consent('granted')
 ```
 
-By default the tracker also stops for browsers that send Global Privacy Control or Do Not Track. Turn either off with `respectGpc: false` or `respectDnt: false`.
+Optionally, the tracker can also stop for browsers that send Global Privacy Control or Do Not Track: turn on `respectGpc` or `respectDnt`. Both are off unless you set them.
 
 ### Opting out your own visits
 

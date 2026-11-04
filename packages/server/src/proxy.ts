@@ -28,8 +28,6 @@ const FORWARDED_REQUEST_HEADERS = [
   'content-encoding',
   'origin',
   'referer',
-  'sec-gpc',
-  'dnt',
   'if-none-match',
 ]
 const FORWARDED_REQUEST_PREFIXES = ['sec-fetch-', 'sec-ch-ua']
