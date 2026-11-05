@@ -9,11 +9,12 @@ The code that runs on your site and your server for [invisit](https://invisit.de
 
 ## Packages
 
-| Package                                 | Description                                                                            | Docs                                |
-| --------------------------------------- | -------------------------------------------------------------------------------------- | ----------------------------------- |
-| [`@invisitdev/web`](packages/web)       | The browser tracker as a typed, SSR-safe ES module, for any framework.                 | [README](packages/web/README.md)    |
-| [`@invisitdev/server`](packages/server) | First-party tracker proxy, crawler analytics and server-side events, on web standards. | [README](packages/server/README.md) |
-| [`apps/tracker`](apps/tracker)          | The tracker source. `invisit.js` and its optional chunks are built from it.            | Not published to npm                |
+| Package                                  | Description                                                                            | Docs                                       |
+| ---------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------ |
+| [`@invisitdev/web`](packages/web)        | The browser tracker as a typed, SSR-safe ES module, for any framework.                 | [README](packages/web/README.md)           |
+| [`@invisitdev/server`](packages/server)  | First-party tracker proxy, crawler analytics and server-side events, on web standards. | [README](packages/server/README.md)        |
+| [`apps/tracker`](apps/tracker)           | The tracker source. `invisit.js` and its optional chunks are built from it.            | Not published to npm                       |
+| [`plugins/wordpress`](plugins/wordpress) | The WordPress plugin: adds the tracker to a WordPress site, with settings in wp-admin. | [readme.txt](plugins/wordpress/readme.txt) |
 
 ## Quick start
 
@@ -48,6 +49,7 @@ To serve the tracker from your own domain, record crawler reads or send events f
 apps/tracker/         tracker source (TypeScript, no runtime dependencies)
 packages/web/         @invisitdev/web
 packages/server/      @invisitdev/server
+plugins/wordpress/    the WordPress plugin (PHP, GPL-2.0-or-later)
 scripts/              build scripts for the tracker and both packages
 .github/workflows/    publish.yml: npm releases with provenance
 ```
@@ -103,4 +105,5 @@ Please report vulnerabilities privately to [help@invisit.dev](mailto:help@invisi
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE), except `plugins/wordpress`, which is GPL-2.0-or-later as WordPress.org requires
+([its LICENSE](plugins/wordpress/LICENSE)).
