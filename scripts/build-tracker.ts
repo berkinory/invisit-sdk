@@ -14,7 +14,9 @@ const BUNDLES: { entry: string; file: string; budgets: Sizes }[] = [
   // 20,900 / 8,836 / 7,974. Raised 2026-11-04 for pageUrl and handing it to the click chunk:
   // measured 21,028 / 8,901 / 8,050. Raised 2026-11-04 for holding events until the site's
   // settings arrive, so a host they turn away sends nothing: measured 21,181 / 8,960 / 8,090.
-  { entry: 'browser.ts', file: 'invisit.js', budgets: { raw: 21_376, gzip: 9_024, brotli: 8_128 } },
+  // Raised 2026-11-05 for visitId() (revenue attribution) and dropping a short link's click
+  // from the address bar: measured 21,565 / 9,127 / 8,239.
+  { entry: 'browser.ts', file: 'invisit.js', budgets: { raw: 21_760, gzip: 9_216, brotli: 8_320 } },
   {
     entry: 'rules-browser.ts',
     file: 'invisit-rules.js',

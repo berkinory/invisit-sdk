@@ -88,7 +88,7 @@ Everything else (allowed domains, redacted query keys, web vitals, heatmaps, no-
 ## API
 
 ```ts
-import { consent, feedback, flush, identify, init, sendFeedback, track } from '@invisitdev/web'
+import { consent, feedback, flush, identify, init, sendFeedback, track, visitId } from '@invisitdev/web'
 ```
 
 Every function except `init()` forwards to the running tracker. Calls made **before** `init()` are queued and applied once it starts, so an `identify()` in your auth code can safely run before the tracker does.
@@ -157,6 +157,14 @@ Sends one message from your own feedback form. Resolves to `true` once the colle
 ```ts
 const sent = await sendFeedback({ message: 'Love it', email: 'me@example.com' })
 ```
+
+### `visitId()`
+
+```ts
+function visitId(): string | null
+```
+
+The current visit's id, to pass into a checkout as `invisit_visit_id` metadata so its revenue is attributed to this visit. It names the visit alone and changes with every visit. `null` on the server, before `init()`, before the collector has answered the first page view, after 30 idle minutes, or while nothing may be measured.
 
 ### `flush()`
 

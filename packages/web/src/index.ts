@@ -53,6 +53,7 @@ export interface Tracker {
   sendFeedback(input: FeedbackMessage): Promise<boolean>
   flush(): void
   stop(): void
+  visitId(): string | null
   readonly version: string
 }
 
@@ -144,6 +145,17 @@ export function feedback(): void {
 
 export function flush(): void {
   forward(['flush'])
+}
+
+/** The current visit's id, to pass into a checkout as `invisit_visit_id` metadata so its
+   revenue is attributed to this visit's source, campaign, landing page and short link. It names
+   the visit alone and changes with every visit. Null on the server, before init(), before the
+   collector has answered the first page view, after 30 idle minutes, or while nothing may be
+   measured. */
+export function visitId(): string | null {
+  const win = browser()
+  const tracker = win && current(win)
+  return tracker ? tracker.visitId() : null
 }
 
 /** Sends one message from the site's own form; resolves to whether the collector took it, and to

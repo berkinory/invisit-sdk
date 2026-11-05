@@ -73,6 +73,9 @@ export function createSessionTracker(newId: () => string) {
       else session.last = now
       return session.id
     },
+    /* The current hint without counting as activity, or null once it has lapsed. */
+    peek: (now: number): string | null =>
+      session && now - session.last <= SESSION_INACTIVITY_MS ? session.id : null,
   }
 }
 

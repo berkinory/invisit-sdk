@@ -5,6 +5,7 @@ import {
   EXTERNAL_USER_ID_MAX_LENGTH,
   ACTION_ID_MAX_LENGTH,
   CONFIG_WAIT_MS,
+  LINK_CLICK_PARAM,
   TITLE_WAIT_MS,
   TRACKER_SDK,
   TRACKER_VERSION,
@@ -120,6 +121,9 @@ export interface Tracker {
   applyConfig(config: TrackerConfigPatch): void
   flush(): void
   stop(): void
+  /* The current visit's id, for checkout metadata; null before the collector has answered,
+     once the visit has lapsed, or while nothing may be measured. */
+  visitId(): string | null
   readonly version: string
 }
 
@@ -142,6 +146,7 @@ export function createTracker(options: TrackerOptions): Tracker {
   const localStore = strict ? memoryStorage() : safeStorage(deviceStorage(win, 'localStorage'))
   const queue = createRetryQueue()
   const session = createSessionTracker(uuidV7)
+  let visit: [hint: string | null, id: string] | undefined
   const privacy = createPrivacyGate(win, localStore, {
     ...DEFAULT_PRIVACY_POLICY,
     ...options.privacyPolicy,
@@ -185,6 +190,7 @@ export function createTracker(options: TrackerOptions): Tracker {
     fetchImpl: options.fetchImpl,
     beaconImpl: options.beaconImpl,
     schedule: options.schedule,
+    onVisit: (id) => void (visit = [session.peek(now()), id]),
     onError:
       options.debug === true ? (reason) => win.console?.debug?.('[invisit]', reason) : undefined,
   })
@@ -281,7 +287,10 @@ export function createTracker(options: TrackerOptions): Tracker {
       { page, ...(referrer === '' ? {} : { referrer }) },
       { immediate: true },
     )
-    if (sent) viewSent = true
+    if (sent) {
+      viewSent = true
+      dropLinkClick(win)
+    }
 
     ruleEngine?.onPageView()
   }
@@ -574,6 +583,20 @@ export function createTracker(options: TrackerOptions): Tracker {
       doc?.removeEventListener('visibilitychange', onVisibility)
     },
 
+    visitId: () => (mayCollect() && visit?.[0] === session.peek(now()) ? visit[1] : null),
+
     version: context.sdk_version,
   }
+}
+
+/* The click a short link handed the landing page has been sent with its page view; it leaves
+   the address bar so a copied or bookmarked URL does not carry it on. */
+function dropLinkClick(win: Window): void {
+  const href = win.location?.href ?? ''
+  if (!href.includes(`${LINK_CLICK_PARAM}=`)) return
+  try {
+    const url = new URL(href)
+    url.searchParams.delete(LINK_CLICK_PARAM)
+    win.history.replaceState(win.history.state, '', url)
+  } catch {}
 }

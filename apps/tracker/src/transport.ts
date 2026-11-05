@@ -23,6 +23,8 @@ export interface TransportDeps {
   readonly schedule?: ((task: () => void, delayMs: number) => void) | undefined
   readonly random?: () => number
   readonly onError?: ((reason: string) => void) | undefined
+  /* The collector names the visit the batch landed in. */
+  readonly onVisit?: (visitId: string) => void
   readonly maySend?: () => boolean
   /* While true, events wait in the buffer instead of going out; the page's exit still sends them. */
   readonly held?: () => boolean
@@ -169,6 +171,10 @@ export function createTransport(deps: TransportDeps) {
 
       if (response.ok) {
         attempts = 0
+        response.json().then(
+          (body: { visit_id?: string }) => body.visit_id && deps.onVisit?.(body.visit_id),
+          () => {},
+        )
         return
       }
 

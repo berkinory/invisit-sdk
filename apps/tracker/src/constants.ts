@@ -63,3 +63,6 @@ export const chunkGlobal = (name: TrackerChunk): string => `__invisit_${name}`
 
 export const OVERLAY_KEY = 'invisit.overlay'
 export const OVERLAY_HASH = 'invisit-heatmap='
+
+/* The short-link click a redirect appends to a landing page; the collector reads and drops it. */
+export const LINK_CLICK_PARAM = 'ivc'
