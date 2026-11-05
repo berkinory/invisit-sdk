@@ -1,0 +1,9 @@
+{
+  // A Worker in front of your site. After deploying, route it to your domain (Worker, Settings,
+  // Domains & Routes, Add route: example.com/*), or it only answers on its workers.dev address.
+  "name": "invisit",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": false,
+  "observability": { "enabled": true },
+}

@@ -1,0 +1,26 @@
+{
+  "name": "invisit-worker",
+  "private": true,
+  "description": "invisit on Cloudflare Workers: serve the tracker from your own domain and record AI crawler and search bot reads, in front of any site.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check": "tsc -p ."
+  },
+  "dependencies": {
+    "@invisitdev/server": "^0.4.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.157.0",
+    "@cloudflare/workers-types": "^5.20261104.1",
+    "typescript": "^7.0.2"
+  },
+  "cloudflare": {
+    "bindings": {
+      "INVISIT_API_KEY": {
+        "description": "An **ingest** key of your site: in the [invisit dashboard](https://app.invisit.dev), Site settings, API keys. It only lets the Worker send data for that site."
+      }
+    }
+  }
+}
