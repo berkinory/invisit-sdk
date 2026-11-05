@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    // It runs under Node 18+ through npx, never under Bun.
+    "types": ["node"]
+  },
+  "include": ["src"]
+}

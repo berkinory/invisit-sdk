@@ -6,11 +6,12 @@
   "workspaces": [
     "apps/tracker",
     "packages/web",
-    "packages/server"
+    "packages/server",
+    "packages/cli"
   ],
   "scripts": {
     "tracker:build": "bun scripts/build-tracker.ts",
-    "build": "bun run tracker:build && bun run --filter \"@invisitdev/*\" build"
+    "build": "bun run tracker:build && bun run --filter \"@invisitdev/*\" --filter invisit build"
   },
   "devDependencies": {
     "oxc-minify": "0.155.0",

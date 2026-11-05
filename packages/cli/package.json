@@ -1,0 +1,40 @@
+{
+  "name": "invisit",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Installs invisit, privacy-first web analytics, in any web project with one command: npx invisit init.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/berkinory/invisit-sdk.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://invisit.dev/docs/web/installation",
+  "keywords": [
+    "analytics",
+    "web-analytics",
+    "privacy",
+    "cookieless",
+    "cli",
+    "invisit"
+  ],
+  "type": "module",
+  "bin": {
+    "invisit": "dist/invisit.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "bun ../../scripts/build-cli.ts"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2"
+  }
+}

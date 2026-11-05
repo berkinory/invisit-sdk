@@ -1,7 +1,7 @@
 name: Publish
-# Mirrored from invisit's private repository. Publishes @invisitdev/web and @invisitdev/server
-# to npm when their package.json carries a version npm doesn't have yet. Trusted publishing
-# (OIDC): no npm token exists, and every release carries provenance.
+# Mirrored from invisit's private repository. Publishes @invisitdev/web, @invisitdev/server and
+# the invisit installer CLI to npm when their package.json carries a version npm doesn't have
+# yet. Trusted publishing (OIDC): no npm token exists, and every release carries provenance.
 on:
   push:
     branches: [main]
@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   publish:
-    name: '@invisitdev/${{ matrix.package }}'
+    name: 'packages/${{ matrix.package }}'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [web, server]
+        package: [web, server, cli]
     defaults:
       run:
         working-directory: packages/${{ matrix.package }}
