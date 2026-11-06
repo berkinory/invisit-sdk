@@ -8,6 +8,7 @@ const IMPORTS: { readonly [K in TrackerChunk]: () => Promise<TrackerChunks[K]> }
   interactions: () => import('./interactions.ts').then((module) => module.TRACKER_INTERACTIONS),
   overlay: () => import('./overlay/index.ts').then((module) => module.TRACKER_OVERLAY),
   feedback: () => import('./feedback.ts').then((module) => module.TRACKER_FEEDBACK),
+  debug: () => import('./debug.ts').then((module) => module.TRACKER_DEBUG),
 }
 
 export const importChunk: ChunkLoader = (name, ready) => {

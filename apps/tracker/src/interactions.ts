@@ -90,7 +90,8 @@ export function createInteractions(
     const { href } = win.location
     if (pageUrl && pageUrl(href).split(/[?#]/)[0] !== href.split(/[?#]/)[0]) return
     const origin = event.target as Element | null
-    if (origin?.nodeType !== 1 || origin.closest('invisit-overlay,invisit-feedback')) return
+    if (origin?.nodeType !== 1 || origin.closest('invisit-overlay,invisit-feedback,invisit-debug'))
+      return
     const target = origin.closest('svg') ?? origin
     const rect = target.getBoundingClientRect()
     if (!rect.width || !rect.height) return

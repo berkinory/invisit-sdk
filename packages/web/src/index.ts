@@ -13,6 +13,8 @@ export interface InitOptions {
   /** Where the collector is: https://api.invisit.dev (the default), or a first-party proxy
      path such as "/_i". */
   readonly baseUrl?: string
+  /** Logs each delivery and why anything was refused, and lets a browser driven by automation
+     send events. They still count: test without counting from Settings → Debug. */
   readonly debug?: boolean
   /** "none" keeps even the consent answer and the owner's opt-out off the device. */
   readonly storage?: 'auto' | 'none'

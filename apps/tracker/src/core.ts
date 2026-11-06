@@ -108,6 +108,9 @@ export interface TrackerOptions {
   readonly fetchImpl?: (url: string, init: RequestInit) => Promise<Response>
   readonly beaconImpl?: (url: string, body: string) => boolean
   readonly onRouteChange?: () => void
+  /* Set for a debug session, which outranks the owner's own opt-out on this device. */
+  readonly debugToken?: string
+  readonly onDelivery?: (events: readonly TrackerEvent[], problem: string | null) => void
 }
 
 export interface Tracker {
@@ -164,7 +167,7 @@ export function createTracker(options: TrackerOptions): Tracker {
     !stopped &&
     !config.disabled &&
     privacy.mayCollect() &&
-    localStore.get(IGNORE_KEY) !== '1' &&
+    (options.debugToken !== undefined || localStore.get(IGNORE_KEY) !== '1') &&
     !excludedPath()
 
   const later = options.schedule ?? ((task: () => void, ms: number) => win.setTimeout(task, ms))
@@ -191,8 +194,15 @@ export function createTracker(options: TrackerOptions): Tracker {
     beaconImpl: options.beaconImpl,
     schedule: options.schedule,
     onVisit: (id) => void (visit = [session.peek(now()), id]),
-    onError:
-      options.debug === true ? (reason) => win.console?.debug?.('[invisit]', reason) : undefined,
+    debugToken: options.debugToken,
+    onDelivery:
+      options.debug === true || options.debugToken !== undefined
+        ? (events, problem) => {
+            if (problem) win.console?.warn?.('[invisit] refused:', problem, events)
+            else win.console?.info?.('[invisit] delivered', events)
+            options.onDelivery?.(events, problem)
+          }
+        : undefined,
   })
 
   const currentPage = (): TrackerPage | undefined => {

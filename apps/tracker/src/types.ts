@@ -65,6 +65,7 @@ export interface EventBatchBody {
   readonly sent_at: string
   readonly context: TrackerContext
   readonly events: readonly TrackerEvent[]
+  readonly debug_token?: string
 }
 
 export interface HeartbeatBody {

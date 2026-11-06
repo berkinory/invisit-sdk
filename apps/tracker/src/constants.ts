@@ -57,12 +57,20 @@ export const HEARTBEAT_INTERVAL_SECONDS = 15
 
 export const ACTIVITY_WINDOW_MS = 5_000
 
-export type TrackerChunk = 'extras' | 'notices' | 'rules' | 'interactions' | 'overlay' | 'feedback'
+export type TrackerChunk =
+  | 'extras'
+  | 'notices'
+  | 'rules'
+  | 'interactions'
+  | 'overlay'
+  | 'feedback'
+  | 'debug'
 
 export const chunkGlobal = (name: TrackerChunk): string => `__invisit_${name}`
 
 export const OVERLAY_KEY = 'invisit.overlay'
 export const OVERLAY_HASH = 'invisit-heatmap='
+export const DEBUG_KEY = 'invisit.debug'
 
 /* The short-link click a redirect appends to a landing page; the collector reads and drops it. */
 export const LINK_CLICK_PARAM = 'ivc'

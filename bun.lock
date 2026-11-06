@@ -16,7 +16,7 @@
     },
     "packages/cli": {
       "name": "invisit",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "bin": {
         "invisit": "dist/invisit.js",
       },
@@ -36,7 +36,7 @@
     },
     "packages/web": {
       "name": "@invisitdev/web",
-      "version": "0.4.1",
+      "version": "0.5.0",
       "devDependencies": {
         "@invisit/tracker": "workspace:*",
       },

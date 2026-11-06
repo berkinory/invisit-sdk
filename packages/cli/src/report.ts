@@ -33,6 +33,7 @@ export function printFinish(id: string, envKey: string | undefined, scriptTag: b
   say(
     `Verify: run the site and open a page, then open Realtime for this site at ${APP_URL}. The visit shows up within seconds.`,
   )
+  say('To test without counting, start a debug session from Settings → Debug.')
   say(
     scriptTag
       ? 'A browser driven by automation is only counted when the tag has data-debug="true".'

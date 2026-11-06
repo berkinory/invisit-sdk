@@ -16,7 +16,8 @@ const BUNDLES: { entry: string; file: string; budgets: Sizes }[] = [
   // settings arrive, so a host they turn away sends nothing: measured 21,181 / 8,960 / 8,090.
   // Raised 2026-11-05 for visitId() (revenue attribution) and dropping a short link's click
   // from the address bar: measured 21,565 / 9,127 / 8,239.
-  { entry: 'browser.ts', file: 'invisit.js', budgets: { raw: 21_760, gzip: 9_216, brotli: 8_320 } },
+  // Raised 2026-11-06 for debug sessions and naming a refusal in debug output: measured 22,309 / 9,423 / 8,533.
+  { entry: 'browser.ts', file: 'invisit.js', budgets: { raw: 22_400, gzip: 9_472, brotli: 8_576 } },
   {
     entry: 'rules-browser.ts',
     file: 'invisit-rules.js',
@@ -48,6 +49,11 @@ const BUNDLES: { entry: string; file: string; budgets: Sizes }[] = [
     entry: 'overlay-browser.ts',
     file: 'invisit-overlay.js',
     budgets: { raw: 22_528, gzip: 9_216, brotli: 8_192 },
+  },
+  {
+    entry: 'debug-browser.ts',
+    file: 'invisit-debug.js',
+    budgets: { raw: 7_424, gzip: 3_456, brotli: 3_008 },
   },
 ]
 

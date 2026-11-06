@@ -1,6 +1,8 @@
 import { loadTrackerConfig } from './config.ts'
-import { OVERLAY_HASH, OVERLAY_KEY, type TrackerChunk } from './constants.ts'
+import { DEBUG_KEY, OVERLAY_HASH, OVERLAY_KEY, type TrackerChunk } from './constants.ts'
 import type { Tracker, TrackerConfigPatch } from './core.ts'
+import { takeDebugToken } from './debug-session.ts'
+import type { DebugReport, TrackerDebug } from './debug.ts'
 import type { TrackerExtras } from './extras.ts'
 import type { TrackerFeedback } from './feedback.ts'
 import { resolveIgnore } from './ignore.ts'
@@ -19,6 +21,7 @@ export interface TrackerChunks {
   readonly interactions: TrackerInteractions
   readonly overlay: TrackerOverlay
   readonly feedback: TrackerFeedback
+  readonly debug: TrackerDebug
 }
 
 export type ChunkLoader = <K extends TrackerChunk>(
@@ -55,17 +58,19 @@ export function startTracker(
   win.addEventListener('hashchange', overlay)
   if (overlay()) return
 
+  const tabStore = safeStorage(strict ? null : deviceStorage(win, 'sessionStorage'))
+  const debugToken = takeDebugToken(win, tabStore)
   const localStore = strict ? memoryStorage() : safeStorage(deviceStorage(win, 'localStorage'))
   if (!strict) {
     const ignore = resolveIgnore(localStore, win.location?.hash ?? '')
     const changed = ignore.changed
     if (changed) loadChunk('notices', (notices) => notices.showIgnoreNotice(doc, changed))
-    if (ignore.ignored) return
+    if (ignore.ignored && !debugToken) return
   }
 
   // Playwright, Puppeteer, Selenium and other WebDriver clients set navigator.webdriver: tests and
   // scrapers, not visitors. Debug mode still sends, so a test can check its own setup.
-  if (win.navigator?.webdriver && !options.debug) return
+  if (win.navigator?.webdriver && !options.debug && !debugToken) return
 
   if (options.siteId === '' || options.collectorUrl === '') {
     win.console?.warn?.('[invisit] missing site or collector; tracker not started')
@@ -76,8 +81,9 @@ export function startTracker(
     typeof win.fetch === 'function'
       ? { fetchImpl: (url: string, init: RequestInit) => win.fetch(url, init) }
       : {}
+  // A beacon gets no answer, and debugging is reading the collector's answer.
   const beaconDeps =
-    typeof win.navigator?.sendBeacon === 'function'
+    typeof win.navigator?.sendBeacon === 'function' && !options.debug && !debugToken
       ? { beaconImpl: (url: string, payload: string) => win.navigator.sendBeacon(url, payload) }
       : {}
 
@@ -110,7 +116,8 @@ export function startTracker(
     const allowedDomains = config.allowedDomains
     const hostname = win.location?.hostname ?? ''
 
-    if (!allowedDomains || allowedDomains.length === 0) return config
+    // A session sends anyway, so the page shows the collector turning the host away.
+    if (!allowedDomains || allowedDomains.length === 0 || debugToken) return config
     if (isHostAllowed(hostname, allowedDomains)) return config
 
     if (!hostWarned) {
@@ -128,6 +135,21 @@ export function startTracker(
     return { ...config, disabled: true }
   }
 
+  let report: DebugReport | undefined
+  const unseen: Parameters<DebugReport>[] = []
+  if (debugToken) {
+    loadChunk('debug', (chunk) => {
+      report = chunk.openDebug({
+        doc,
+        end: () => {
+          tabStore.remove(DEBUG_KEY)
+          win.location.reload()
+        },
+      })
+      for (const delivery of unseen) report(...delivery)
+    })
+  }
+
   const { tracker } = installTracker(win, {
     ...options,
     ...fetchDeps,
@@ -135,9 +157,16 @@ export function startTracker(
     awaitConfig: true,
     loadExtras: (ready) => loadChunk('extras', ready),
     loadInteractions: (ready) => loadChunk('interactions', ready),
-    loadFeedback: (ready) => loadChunk('feedback', ready),
     loadRules: (ready) => loadChunk('rules', ready),
     onRouteChange: () => syncConfig(),
+    // Feedback is a real message to the site's owner: a session leaves the widget off.
+    ...(debugToken
+      ? {
+          debugToken,
+          onDelivery: (...delivery: Parameters<DebugReport>) =>
+            report ? report(...delivery) : void unseen.push(delivery),
+        }
+      : { loadFeedback: (ready) => loadChunk('feedback', ready) }),
   })
 
   stopTracker = () => tracker.stop()

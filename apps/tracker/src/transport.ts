@@ -22,7 +22,12 @@ export interface TransportDeps {
   readonly beaconImpl?: ((url: string, body: string) => boolean) | undefined
   readonly schedule?: ((task: () => void, delayMs: number) => void) | undefined
   readonly random?: () => number
-  readonly onError?: ((reason: string) => void) | undefined
+  /* Debug only. The problem is null once the collector took the batch, or names why it did not. */
+  readonly onDelivery?:
+    | ((events: readonly TrackerEvent[], problem: string | null) => void)
+    | undefined
+  /* A debug session: its batches are judged and never stored, and it never counts as present. */
+  readonly debugToken?: string | undefined
   /* The collector names the visit the batch landed in. */
   readonly onVisit?: (visitId: string) => void
   readonly maySend?: () => boolean
@@ -103,7 +108,7 @@ export function createTransport(deps: TransportDeps) {
 
   const serialize = (
     payload:
-      | Pick<EventBatchBody, 'context' | 'events'>
+      | Pick<EventBatchBody, 'context' | 'events' | 'debug_token'>
       | Omit<HeartbeatBody, 'schema_version' | 'site_id' | 'sent_at'>,
   ): string =>
     JSON.stringify({
@@ -133,12 +138,16 @@ export function createTransport(deps: TransportDeps) {
   }
 
   const body = (events: readonly TrackerEvent[]): string => {
-    return serialize({ context: deps.context, events })
+    return serialize({
+      context: deps.context,
+      events,
+      ...(deps.debugToken ? { debug_token: deps.debugToken } : {}),
+    })
   }
 
   const requeue = (events: readonly TrackerEvent[], reason: string): void => {
     deps.queue.push(events, deps.now())
-    deps.onError?.(reason)
+    deps.onDelivery?.(events, reason)
   }
 
   const backOff = (serverDelayMs: number | null): void => {
@@ -172,7 +181,10 @@ export function createTransport(deps: TransportDeps) {
       if (response.ok) {
         attempts = 0
         response.json().then(
-          (body: { visit_id?: string }) => body.visit_id && deps.onVisit?.(body.visit_id),
+          (body: { visit_id?: string; dropped?: string }) => {
+            if (body.visit_id) deps.onVisit?.(body.visit_id)
+            deps.onDelivery?.(events, body.dropped ?? null)
+          },
           () => {},
         )
         return
@@ -183,7 +195,13 @@ export function createTransport(deps: TransportDeps) {
         backOff(retryAfterMs(response.headers.get('Retry-After'), deps.now()))
         return
       }
-      deps.onError?.(`dropped_${response.status}`)
+      if (deps.onDelivery) {
+        response.json().then(
+          (body: { error?: { details?: { reason?: string } } }) =>
+            deps.onDelivery?.(events, body.error?.details?.reason ?? `status_${response.status}`),
+          () => deps.onDelivery?.(events, `status_${response.status}`),
+        )
+      }
     } catch {
       if (current !== generation || !maySend()) return
       requeue(events, 'network_error')
@@ -259,7 +277,7 @@ export function createTransport(deps: TransportDeps) {
     },
 
     sendHeartbeat(payload: Omit<HeartbeatBody, 'schema_version' | 'site_id' | 'sent_at'>) {
-      if (!maySend() || deps.held?.() === true) return
+      if (!maySend() || deps.held?.() === true || deps.debugToken) return
       const serialized = serialize(payload)
 
       const beaconImpl = deps.beaconImpl

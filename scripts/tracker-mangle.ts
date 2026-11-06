@@ -26,7 +26,8 @@ export const INTERNAL_PROPS = [
   'setIntervalImpl',
   'clearIntervalImpl',
   'schedule',
-  'onError',
+  'onDelivery',
+  'debugToken',
   'onRouteChange',
   'onUnknownSite',
   'onNavigate',
@@ -84,6 +85,7 @@ export const SHARED_PROPS = [
   'feedbackCollector',
   'feedbackSiteId',
   'submit',
+  'openDebug',
 ]
 
 type PropertyMangling = { readonly include: RegExp; readonly cache: Record<string, string> }

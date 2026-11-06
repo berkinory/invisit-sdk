@@ -74,7 +74,7 @@ init({
 | ---------------- | ------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | `site`           | `string`            | **required**              | The site id, from Settings → Installation.                                                                    |
 | `baseUrl`        | `string`            | `https://api.invisit.dev` | The collector: the invisit cloud, or a [first-party proxy](#first-party-proxy) path such as `'/_i'`.          |
-| `debug`          | `boolean`           | `false`                   | Logs delivery problems and repeated `init()` calls to the console.                                            |
+| `debug`          | `boolean`           | `false`                   | Logs each delivery, why anything was refused, and repeated `init()` calls. Events still count.                |
 | `storage`        | `'auto' \| 'none'`  | `'auto'`                  | `'none'` keeps nothing at all on the device, not even the consent answer.                                     |
 | `outboundLinks`  | `boolean`           | `true`                    | Records clicks on links to other sites.                                                                       |
 | `fileDownloads`  | `boolean`           | `true`                    | Records clicks on file downloads.                                                                             |
@@ -88,7 +88,16 @@ Everything else (allowed domains, redacted query keys, web vitals, heatmaps, no-
 ## API
 
 ```ts
-import { consent, feedback, flush, identify, init, sendFeedback, track, visitId } from '@invisitdev/web'
+import {
+  consent,
+  feedback,
+  flush,
+  identify,
+  init,
+  sendFeedback,
+  track,
+  visitId,
+} from '@invisitdev/web'
 ```
 
 Every function except `init()` forwards to the running tracker. Calls made **before** `init()` are queued and applied once it starts, so an `identify()` in your auth code can safely run before the tracker does.
