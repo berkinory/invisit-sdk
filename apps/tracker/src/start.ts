@@ -119,7 +119,6 @@ export function startTracker(
         win.console?.warn?.(
           notices.unallowedHostMessage({
             host: win.location?.host ?? hostname,
-            hostname,
             allowedDomains,
           }),
         ),

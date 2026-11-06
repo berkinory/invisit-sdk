@@ -1,27 +1,10 @@
 // Messages shown only in rare cases, kept out of the code every page loads.
 
-const LOCAL_HOSTS: readonly string[] = ['localhost', '127.0.0.1', '::1', '[::1]']
-
-const LOCAL_SUFFIX = '.localhost'
-
-export function isLocalHost(hostname: string): boolean {
-  const host = hostname.trim().toLowerCase()
-  return LOCAL_HOSTS.includes(host) || host.endsWith(LOCAL_SUFFIX)
-}
-
 export function unallowedHostMessage(input: {
   readonly host: string
-  readonly hostname: string
   readonly allowedDomains: readonly string[]
 }): string {
   const domains = input.allowedDomains.join(', ')
-
-  if (isLocalHost(input.hostname)) {
-    return (
-      `[invisit] Tag loaded on ${input.host}, but visits are only counted from ${domains}. ` +
-      `A local host cannot be allowed; open the deployed site to see data.`
-    )
-  }
 
   return (
     `[invisit] Tag loaded on ${input.host}, which is not on this site's allowed domains ` +

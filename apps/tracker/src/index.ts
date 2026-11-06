@@ -46,7 +46,7 @@ export {
 
 export { IGNORE_KEY, resolveIgnore, type IgnoreDecision } from './ignore.ts'
 export { isHostAllowed } from './origin.ts'
-export { isLocalHost, showIgnoreNotice, unallowedHostMessage } from './notices.ts'
+export { showIgnoreNotice, unallowedHostMessage } from './notices.ts'
 export { createRetryQueue, createSessionTracker, memoryStorage, safeStorage } from './storage.ts'
 export { INGEST_CONTENT_TYPE, createTransport } from './transport.ts'
 export { createUuidV7, uuidV7 } from './uuid.ts'
