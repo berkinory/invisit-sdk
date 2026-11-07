@@ -1,5 +1,6 @@
 export interface HeartbeatDeps {
   readonly document: { visibilityState?: DocumentVisibilityState }
+  readonly idle: () => boolean
   readonly intervalSeconds: () => number
   readonly send: () => void
   readonly setIntervalImpl?: ((task: () => void, ms: number) => unknown) | undefined
@@ -15,7 +16,7 @@ export function createHeartbeat(deps: HeartbeatDeps) {
   let handle: unknown = null
 
   const tick = (): void => {
-    if (deps.document.visibilityState === 'hidden') return
+    if (deps.document.visibilityState === 'hidden' || deps.idle()) return
     deps.send()
   }
 

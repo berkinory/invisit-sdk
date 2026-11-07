@@ -20,6 +20,8 @@ export interface InitOptions {
   readonly storage?: 'auto' | 'none'
   readonly outboundLinks?: boolean
   readonly fileDownloads?: boolean
+  /** Reports uncaught errors to the Errors page. Off unless set. */
+  readonly errors?: boolean
   /** Paths never measured: exact ("/health") or a trailing wildcard ("/preview/*"). */
   readonly excludePaths?: readonly string[]
   /** Rewrites each page address before it is recorded, for example to turn
@@ -55,6 +57,7 @@ export interface Tracker {
   sendFeedback(input: FeedbackMessage): Promise<boolean>
   flush(): void
   stop(): void
+  captureError(error: unknown): void
   visitId(): string | null
   readonly version: string
 }
@@ -115,6 +118,7 @@ export function init(options: InitOptions): Tracker | undefined {
         ...(options.storage === undefined ? {} : { storage: options.storage }),
         ...(options.outboundLinks === undefined ? {} : { outboundLinks: options.outboundLinks }),
         ...(options.fileDownloads === undefined ? {} : { fileDownloads: options.fileDownloads }),
+        ...(options.errors === undefined ? {} : { errors: options.errors }),
         ...(options.pageUrl === undefined ? {} : { pageUrl: options.pageUrl }),
       },
       importChunk,
@@ -143,6 +147,12 @@ export function consent(state: ConsentState): void {
 /** Opens the feedback widget, where the site has it on. */
 export function feedback(): void {
   forward(['feedback'])
+}
+
+/** Reports an error your code caught, such as one an error boundary stopped: those never reach
+   the browser's own error handler. Needs `errors: true`. */
+export function captureError(error: unknown): void {
+  forward(['captureError', error])
 }
 
 export function flush(): void {

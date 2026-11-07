@@ -1,4 +1,4 @@
-import { ACTIVITY_WINDOW_MS } from './constants.ts'
+import { ACTIVITY_EVENTS, ACTIVITY_WINDOW_MS } from './constants.ts'
 import type { EngagementPayload } from './types.ts'
 
 export interface EngagementDeps {
@@ -11,8 +11,6 @@ export interface EngagementDeps {
   readonly now: () => number
   readonly measureScroll?: () => number
 }
-
-const ACTIVITY_EVENTS = ['pointerdown', 'keydown', 'scroll', 'touchstart', 'wheel'] as const
 
 export function createEngagement(deps: EngagementDeps) {
   let visibleSince: number | null = null

@@ -125,6 +125,7 @@ export function optionsFromScript(
   const debug = flag('data-debug')
   const outboundLinks = flag('data-outbound-links')
   const fileDownloads = flag('data-file-downloads')
+  const errors = flag('data-errors')
   const storage = attribute('data-storage') === 'none' ? ('none' as const) : undefined
 
   return {
@@ -138,6 +139,7 @@ export function optionsFromScript(
     ...(storage === undefined ? {} : { storage }),
     ...(outboundLinks === undefined ? {} : { outboundLinks }),
     ...(fileDownloads === undefined ? {} : { fileDownloads }),
+    ...(errors === undefined ? {} : { errors }),
     privacyPolicy,
   }
 }

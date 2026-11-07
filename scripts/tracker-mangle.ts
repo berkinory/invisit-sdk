@@ -21,6 +21,7 @@ export const INTERNAL_PROPS = [
   'loadRules',
   'loadInteractions',
   'loadFeedback',
+  'loadErrors',
   'fetchImpl',
   'beaconImpl',
   'setIntervalImpl',
@@ -86,6 +87,14 @@ export const SHARED_PROPS = [
   'feedbackSiteId',
   'submit',
   'openDebug',
+  'createErrors',
+  'errorsCollector',
+  'errorsSiteId',
+  'errorsContext',
+  'errorsToken',
+  'errorsAllowed',
+  'errorsVisit',
+  'errorsPage',
 ]
 
 type PropertyMangling = { readonly include: RegExp; readonly cache: Record<string, string> }

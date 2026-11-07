@@ -55,7 +55,11 @@ export const BATCH_DELAY_MS = 1_000
 
 export const HEARTBEAT_INTERVAL_SECONDS = 15
 
+export const ACTIVITY_EVENTS = ['pointerdown', 'keydown', 'scroll', 'touchstart', 'wheel'] as const
+
 export const ACTIVITY_WINDOW_MS = 5_000
+
+export const IDLE_AFTER_MS = 5 * 60 * 1000
 
 export type TrackerChunk =
   | 'extras'
@@ -65,6 +69,7 @@ export type TrackerChunk =
   | 'overlay'
   | 'feedback'
   | 'debug'
+  | 'errors'
 
 export const chunkGlobal = (name: TrackerChunk): string => `__invisit_${name}`
 

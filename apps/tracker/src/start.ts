@@ -3,6 +3,7 @@ import { DEBUG_KEY, OVERLAY_HASH, OVERLAY_KEY, type TrackerChunk } from './const
 import type { Tracker, TrackerConfigPatch } from './core.ts'
 import { takeDebugToken } from './debug-session.ts'
 import type { DebugReport, TrackerDebug } from './debug.ts'
+import type { TrackerErrors } from './errors.ts'
 import type { TrackerExtras } from './extras.ts'
 import type { TrackerFeedback } from './feedback.ts'
 import { resolveIgnore } from './ignore.ts'
@@ -22,6 +23,7 @@ export interface TrackerChunks {
   readonly overlay: TrackerOverlay
   readonly feedback: TrackerFeedback
   readonly debug: TrackerDebug
+  readonly errors: TrackerErrors
 }
 
 export type ChunkLoader = <K extends TrackerChunk>(
@@ -158,6 +160,7 @@ export function startTracker(
     loadExtras: (ready) => loadChunk('extras', ready),
     loadInteractions: (ready) => loadChunk('interactions', ready),
     loadRules: (ready) => loadChunk('rules', ready),
+    loadErrors: (ready) => loadChunk('errors', ready),
     onRouteChange: () => syncConfig(),
     // Feedback is a real message to the site's owner: a session leaves the widget off.
     ...(debugToken

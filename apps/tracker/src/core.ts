@@ -10,6 +10,8 @@ import {
   TRACKER_SDK,
   TRACKER_VERSION,
 } from './constants.ts'
+import type { TrackerErrors } from './errors.ts'
+import { watchErrors } from './errors-watch.ts'
 import type { TrackerExtras } from './extras.ts'
 import type { FeedbackConfig, FeedbackMessage, TrackerFeedback } from './feedback.ts'
 import type { TrackerInteractions } from './interactions.ts'
@@ -88,6 +90,9 @@ export interface TrackerOptions {
   readonly privacyPolicy?: Partial<PrivacyPolicy>
   readonly outboundLinks?: boolean
   readonly fileDownloads?: boolean
+  /* Reports the page's uncaught errors. Set in the site's code, so nothing waits on its settings
+     and a page's first failure is not missed. */
+  readonly errors?: boolean
   readonly excludePaths?: readonly string[]
   /* Rewrites the address before it is recorded, as when ids in the path become placeholders. */
   readonly pageUrl?: (href: string) => string
@@ -99,6 +104,7 @@ export interface TrackerOptions {
   readonly loadRules?: (ready: (rules: TrackerRules) => void) => void
   readonly loadInteractions?: (ready: (chunk: TrackerInteractions) => void) => void
   readonly loadFeedback?: (ready: (chunk: TrackerFeedback) => void) => void
+  readonly loadErrors?: (ready: (chunk: TrackerErrors) => void) => void
   readonly config?: TrackerConfigPatch
   readonly now?: () => number
   readonly random?: () => number
@@ -121,6 +127,8 @@ export interface Tracker {
   consent(state: 'granted' | 'denied' | 'unknown'): void
   feedback(): void
   sendFeedback(input: FeedbackMessage): Promise<boolean>
+  /* Reports an error the site caught itself, as in an error boundary. */
+  captureError(error: unknown): void
   applyConfig(config: TrackerConfigPatch): void
   flush(): void
   stop(): void
@@ -241,11 +249,14 @@ export function createTracker(options: TrackerOptions): Tracker {
     if (feature && !config.features[feature]) return false
 
     const page = extras.page ?? currentPage()
+    /* Measurements go out when the tab goes away, which can be hours after anyone was at it. Timed
+       by then, they would stretch the visit over that gap or open a new one with no pages. */
+    const at = feature ? signals.seenAt() : now()
     const event: TrackerEvent = {
       event_id: uuidV7(),
       type,
-      occurred_at: new Date(now()).toISOString(),
-      client_session_id: session.current(now()),
+      occurred_at: new Date(at).toISOString(),
+      client_session_id: session.current(at),
       ...(page ? { page } : {}),
       ...extras,
     }
@@ -253,6 +264,22 @@ export function createTracker(options: TrackerOptions): Tracker {
     transport.enqueue(event, options_)
     return true
   }
+
+  const currentVisit = (): string | null =>
+    mayCollect() && visit?.[0] === session.peek(now()) ? visit[1] : null
+
+  const errorWatch =
+    options.errors && options.loadErrors
+      ? watchErrors(win, options.loadErrors, {
+          errorsCollector: options.collectorUrl,
+          errorsSiteId: options.siteId,
+          errorsContext: context,
+          errorsToken: options.debugToken,
+          errorsAllowed: mayCollect,
+          errorsVisit: currentVisit,
+          errorsPage: () => currentPage()?.url ?? '',
+        })
+      : undefined
 
   /* The widget chunk decides itself whether new settings need a fresh mount, so a config refresh
      never closes an open form. */
@@ -326,6 +353,10 @@ export function createTracker(options: TrackerOptions): Tracker {
     },
     onVitalsReady: () => {
       if (left) reportVitalsAndFlush()
+    },
+    /* Back after the visit lapsed: a new visit, which starts on the page in front of them. */
+    onReturn: () => {
+      if (!left && session.peek(now()) === null) emitPageview('')
     },
   })
   let ruleEngine: RuleEngine | undefined
@@ -445,6 +476,7 @@ export function createTracker(options: TrackerOptions): Tracker {
     left = false
     emitPageview('')
     startSignals()
+    signals.ping()
   }
 
   const onVisibility = (): void => {
@@ -587,13 +619,16 @@ export function createTracker(options: TrackerOptions): Tracker {
       actions.stop()
       links.stop()
       navigation.stop()
+      errorWatch?.stop()
       win.removeEventListener('pagehide', onPageHide)
       win.removeEventListener('pageshow', onPageShow)
       win.removeEventListener('storage', onStorage)
       doc?.removeEventListener('visibilitychange', onVisibility)
     },
 
-    visitId: () => (mayCollect() && visit?.[0] === session.peek(now()) ? visit[1] : null),
+    captureError: (error) => errorWatch?.capture(error),
+
+    visitId: currentVisit,
 
     version: context.sdk_version,
   }

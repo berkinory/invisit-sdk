@@ -78,6 +78,7 @@ init({
 | `storage`        | `'auto' \| 'none'`  | `'auto'`                  | `'none'` keeps nothing at all on the device, not even the consent answer.                                     |
 | `outboundLinks`  | `boolean`           | `true`                    | Records clicks on links to other sites.                                                                       |
 | `fileDownloads`  | `boolean`           | `true`                    | Records clicks on file downloads.                                                                             |
+| `errors`         | `boolean`           | `false`                   | Reports uncaught errors to the Errors page. Report caught ones with `captureError(error)`.                    |
 | `excludePaths`   | `readonly string[]` | `[]`                      | Paths never measured: exact (`'/health'`) or with a trailing wildcard (`'/admin/*'`).                         |
 | `respectGpc`     | `boolean`           | `false`                   | Turned on, stops measuring for browsers that send [Global Privacy Control](https://globalprivacycontrol.org). |
 | `respectDnt`     | `boolean`           | `false`                   | Turned on, stops measuring for browsers that send Do Not Track.                                               |

@@ -1,3 +1,4 @@
+import { createActivity } from './activity.ts'
 import type { TrackerOptions, TrackerRuntimeConfig } from './core.ts'
 import { createEngagement } from './engagement.ts'
 import type { TrackerExtras } from './extras.ts'
@@ -15,6 +16,7 @@ interface SignalsDeps {
   readonly emit: (type: TrackerEventType, extras: Partial<TrackerEvent>) => boolean
   readonly sendHeartbeat: () => void
   readonly onVitalsReady: () => void
+  readonly onReturn: () => void
 }
 
 export function createSignals(deps: SignalsDeps) {
@@ -32,8 +34,17 @@ export function createSignals(deps: SignalsDeps) {
         ),
       ),
   })
+  const activity = createActivity({
+    window: win,
+    now: deps.now,
+    onReturn: () => {
+      deps.onReturn()
+      heartbeat.ping()
+    },
+  })
   const heartbeat = createHeartbeat({
     document: doc,
+    idle: activity.idle,
     intervalSeconds: () => deps.config().heartbeatIntervalSeconds,
     send: deps.sendHeartbeat,
     setIntervalImpl: deps.options.setIntervalImpl,
@@ -90,6 +101,7 @@ export function createSignals(deps: SignalsDeps) {
     if (engagementOn) engagement.stop()
     engagementOn = false
     heartbeat.stop()
+    activity.stop()
     vitals?.stop()
     vitals = undefined
     paused = true
@@ -106,6 +118,7 @@ export function createSignals(deps: SignalsDeps) {
         since = win.performance?.now() ?? 0
         paused = false
       }
+      activity.start()
       const config = deps.config()
       if (config.features.engagement && !engagementOn) {
         engagementOn = true
@@ -139,8 +152,10 @@ export function createSignals(deps: SignalsDeps) {
     },
 
     ping(): void {
-      heartbeat.ping()
+      if (!activity.touch()) heartbeat.ping()
     },
+
+    seenAt: activity.seenAt,
 
     stop(): void {
       stopped = true
