@@ -4,6 +4,16 @@
   "private": false,
   "description": "invisit on your server: a first-party tracker proxy, crawler reads and server-side events, on web-standard Request and Response.",
   "license": "MIT",
+  "homepage": "https://invisit.dev/docs/server/sdk",
+  "keywords": [
+    "analytics",
+    "server-side-analytics",
+    "crawler-analytics",
+    "ai-crawlers",
+    "proxy",
+    "cookieless",
+    "invisit"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/berkinory/invisit-sdk.git",

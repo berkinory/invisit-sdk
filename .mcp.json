@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "invisit": {
+      "type": "http",
+      "url": "https://app.invisit.dev/mcp"
+    }
+  }
+}
