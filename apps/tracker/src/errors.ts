@@ -252,14 +252,16 @@ export function createErrors(
     timer ??= setTimeout(() => flush(false), FLUSH_DELAY_MS)
   }
 
-  const leave = (): void => flush(true)
   win.addEventListener('pagehide', () => {
     leaving = true
-    leave()
+    /* Firefox fails every script still loading as soon as a navigation starts, well before this
+       fires. A failure still waiting for its first send can't be told from one of those. */
+    for (const report of pending) if (report.kind === 'resource') rearm(report, false)
+    flush(true)
   })
-  win.addEventListener('pageshow', () => void (leaving = false))
+  win.addEventListener('pageshow', () => (leaving = false))
   win.document?.addEventListener('visibilitychange', () => {
-    if (win.document.visibilityState === 'hidden') leave()
+    if (win.document.visibilityState === 'hidden') flush(true)
   })
 
   return (source, seen) => {
@@ -267,7 +269,7 @@ export function createErrors(
       const raw = rawOf(source, seen)
       if (raw === null) return
       // Requests the browser cancels as the page goes, or that an offline device could not make.
-      if (leaving && raw.kind === 'rejection') return
+      if (leaving && raw.kind[0] === 'r') return // a rejection or a failed load
       if (raw.kind !== 'manual' && win.navigator.onLine === false) return
       const value = raw.value as { message?: unknown; stack?: unknown } | null | undefined
       const said = typeof value === 'string' ? value : value?.message
