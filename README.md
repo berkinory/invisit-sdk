@@ -51,9 +51,18 @@ Or with no build step at all:
 
 To serve the tracker from your own domain, record crawler reads or send events from your backend, add [`@invisitdev/server`](packages/server/README.md).
 
+## Agent skills
+
+Teach your coding agent to install invisit and read its numbers, with [`install-invisit`](skills/install-invisit/SKILL.md) and [`invisit-analytics`](skills/invisit-analytics/SKILL.md):
+
+```sh
+npx skills add berkinory/invisit-sdk
+```
+
 ## Repository layout
 
 ```text
+skills/               Agent Skills for coding agents
 apps/tracker/         tracker source (TypeScript, no runtime dependencies)
 packages/web/         @invisitdev/web
 packages/server/      @invisitdev/server
