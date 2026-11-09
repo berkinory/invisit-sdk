@@ -103,7 +103,11 @@ export function sanitizeReferrer(
   redactQueryKeys: readonly string[] = [],
 ): string {
   if (referrer === '') return ''
-  return truncate(sanitizeUrl(referrer, redactQueryKeys), REFERRER_MAX_LENGTH)
+  // An Android app opening a link names itself here; only the package is kept, never a deep link.
+  return truncate(
+    /^android-app:\/\/[^/?#]+/.exec(referrer)?.[0] || sanitizeUrl(referrer, redactQueryKeys),
+    REFERRER_MAX_LENGTH,
+  )
 }
 
 export type PropertyValue = string | number | boolean | null

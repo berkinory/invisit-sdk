@@ -21,7 +21,9 @@ const BUNDLES: { entry: string; file: string; budgets: Sizes }[] = [
   // measured 22,905 / 9,668 / 8,734.
   // Raised 2026-11-07 for idle tabs, which stop counting as online and must not stretch a visit:
   // measured 23,453 / 9,840 / 8,904.
-  { entry: 'browser.ts', file: 'invisit.js', budgets: { raw: 23_488, gzip: 9_856, brotli: 8_960 } },
+  // Raised 2026-11-09 for referrers from Android apps, dropped as direct until now:
+  // measured 23,494 / 9,873 / 8,926.
+  { entry: 'browser.ts', file: 'invisit.js', budgets: { raw: 23_520, gzip: 9_888, brotli: 8_960 } },
   {
     entry: 'rules-browser.ts',
     file: 'invisit-rules.js',
