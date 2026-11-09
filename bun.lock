@@ -133,7 +133,7 @@
 
     "invisit": ["invisit@workspace:packages/cli"],
 
-    "isbot": ["isbot@5.2.2", "", {}, "sha512-iQcBXcd+Rv/pkubRyGh2utW2j1oPG5hZY6TUhVPpqK4G+o3IbxpJNx04hgksjc/N7GK5pEorUxDeg31cFgEk/w=="],
+    "isbot": ["isbot@5.2.3", "", {}, "sha512-e8gGz3VzAuImtTMnB5PqNRRWGAswObTc+X+X5a8PttKT78VSSFec98w9ZwUoy6jJdlvJkVdLiN+WMgA8TewoZg=="],
 
     "oxc-minify": ["oxc-minify@0.155.0", "", { "optionalDependencies": { "@oxc-minify/binding-android-arm-eabi": "0.155.0", "@oxc-minify/binding-android-arm64": "0.155.0", "@oxc-minify/binding-darwin-arm64": "0.155.0", "@oxc-minify/binding-darwin-x64": "0.155.0", "@oxc-minify/binding-freebsd-x64": "0.155.0", "@oxc-minify/binding-linux-arm-gnueabihf": "0.155.0", "@oxc-minify/binding-linux-arm-musleabihf": "0.155.0", "@oxc-minify/binding-linux-arm64-gnu": "0.155.0", "@oxc-minify/binding-linux-arm64-musl": "0.155.0", "@oxc-minify/binding-linux-ppc64-gnu": "0.155.0", "@oxc-minify/binding-linux-riscv64-gnu": "0.155.0", "@oxc-minify/binding-linux-riscv64-musl": "0.155.0", "@oxc-minify/binding-linux-s390x-gnu": "0.155.0", "@oxc-minify/binding-linux-x64-gnu": "0.155.0", "@oxc-minify/binding-linux-x64-musl": "0.155.0", "@oxc-minify/binding-openharmony-arm64": "0.155.0", "@oxc-minify/binding-win32-arm64-msvc": "0.155.0", "@oxc-minify/binding-win32-ia32-msvc": "0.155.0", "@oxc-minify/binding-win32-x64-msvc": "0.155.0" } }, "sha512-Y8pRwnciWtDIxrXipqHVLcAi/9LTi2ppVMrvidd0TXwxhAA+y/69R/acULnAhylPOt3E7aHDfoYvwYNVHJFBYg=="],
 
