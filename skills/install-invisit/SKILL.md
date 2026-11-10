@@ -9,7 +9,7 @@ invisit is cookieless web analytics: no cookies, no consent banner, realtime vis
 
 ## 1. Get the site id
 
-The person signs up at https://app.invisit.dev/auth, adds a site with its domain, and copies the **site id** from **Settings → Installation**. Ask them for it; never invent one. The id is public: it is safe in client code and in `PUBLIC_` or `NEXT_PUBLIC_` environment variables.
+The person signs up at https://app.invisit.dev/auth?mode=signup, adds a site with its domain, and copies the **site id** from **Settings → Installation**. Ask them for it; never invent one. The id is public: it is safe in client code and in `PUBLIC_` or `NEXT_PUBLIC_` environment variables.
 
 ## 2. Add the tracker
 

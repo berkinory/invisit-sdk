@@ -1,4 +1,5 @@
 import { createInterface, type Interface } from 'node:readline'
+import { bold, cyan, dim } from './ui.ts'
 
 // Prompts only where a person can answer; agents and CI get a message and exit code instead.
 export const interactive: boolean = Boolean(process.stdin.isTTY && process.stdout.isTTY)
@@ -45,16 +46,16 @@ export function closePrompts(): void {
 }
 
 export async function confirm(question: string): Promise<boolean> {
-  const answer = (await ask(`${question} [Y/n] `))?.toLowerCase()
+  const answer = (await ask(`${cyan('?')} ${bold(question)} ${dim('[Y/n]')} `))?.toLowerCase()
   return answer === '' || answer === 'y' || answer === 'yes'
 }
 
 /** The index picked, or -1 when no valid choice was made. */
 export async function choose(question: string, options: readonly string[]): Promise<number> {
-  process.stdout.write(`${question}\n`)
-  options.forEach((option, i) => process.stdout.write(`  ${i + 1}) ${option}\n`))
+  process.stdout.write(`${cyan('?')} ${bold(question)}\n`)
+  options.forEach((option, i) => process.stdout.write(`  ${cyan(`${i + 1})`)} ${option}\n`))
   for (let attempt = 0; attempt < 3; attempt++) {
-    const answer = await ask('Number: ')
+    const answer = await ask(`${dim('Number:')} `)
     if (answer === null) return -1
     const n = Number(answer)
     if (Number.isInteger(n) && n >= 1 && n <= options.length) return n - 1

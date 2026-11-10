@@ -10,9 +10,23 @@ import { installCommand, runInstall } from './install.ts'
 import type { FileChange } from './ops.ts'
 import { detectManager, Project } from './project.ts'
 import { choose, closePrompts, confirm, interactive } from './prompt.ts'
-import { printFinish, printSteps, say } from './report.ts'
+import {
+  done,
+  fail,
+  printDiff,
+  printFinish,
+  printHeader,
+  printPlan,
+  printSteps,
+  printUsage,
+  say,
+  skipped,
+  status,
+  warn,
+} from './report.ts'
 import { existingSetup } from './setup-check.ts'
 import { resolveSiteId } from './site-id.ts'
+import { bold, dim, startSpinner } from './ui.ts'
 import { workspaceApps } from './workspace.ts'
 
 declare const VERSION: string
@@ -34,7 +48,7 @@ async function pickProject(
   const apps = workspaceApps(project)
   if (apps === null) return { project, framework: null }
   if (apps.length === 0) {
-    say(
+    fail(
       `${shown(dir)} is a workspace root with no web app this installer knows. Pass --dir <app directory>.`,
     )
     return NEEDS_INPUT
@@ -43,7 +57,7 @@ async function pickProject(
   if (apps.length > 1) {
     const list = apps.map((app) => `${app.dir} (${app.framework})`)
     if (!interactive) {
-      say(`${shown(dir)} is a workspace root with several web apps:`)
+      fail(`${shown(dir)} is a workspace root with several web apps:`)
       for (const line of list) say(`  ${line}`)
       say(`Run again with --dir <app directory>, for example --dir ${apps[0]?.dir ?? ''}`)
       return NEEDS_INPUT
@@ -52,7 +66,7 @@ async function pickProject(
     if (index === -1) return NEEDS_INPUT
   }
   const app = apps[index]!
-  say(`Using ${app.dir} (${app.framework}), the web app of this workspace.`)
+  done(`Using ${app.dir} (${app.framework}), the web app of this workspace.`)
   const appProject = new Project(resolve(dir, app.dir))
   return { project: appProject, framework: detectFramework(appProject) }
 }
@@ -68,7 +82,7 @@ function write(project: Project, changes: readonly FileChange[]): void {
 async function init(args: InitArgs): Promise<number> {
   const dir = resolve(args.dir ?? '.')
   if (!new Project(dir).isDir('')) {
-    say(`${dir} is not a directory.`)
+    fail(`${dir} is not a directory.`)
     return NEEDS_INPUT
   }
   const picked = await pickProject(dir)
@@ -77,7 +91,7 @@ async function init(args: InitArgs): Promise<number> {
 
   const existing = existingSetup(project)
   if (existing) {
-    say(
+    done(
       `invisit is already set up in ${shown(project.dir)}: ${existing} loads the tracker. Nothing changed.`,
     )
     return DONE
@@ -85,14 +99,14 @@ async function init(args: InitArgs): Promise<number> {
 
   const site = await resolveSiteId(args.site)
   if ('error' in site) {
-    say(site.error)
+    fail(site.error)
     return NEEDS_INPUT
   }
   const id = site.id
 
   const plan = planFor(project, framework, id, args.scriptTag)
   if (!plan) {
-    say(
+    fail(
       project.pkg
         ? `No framework this installer knows was found in ${shown(project.dir)}/package.json, and there is no HTML page to put the script tag in.`
         : `No web project was found in ${shown(project.dir)}: no package.json and no HTML page.`,
@@ -107,17 +121,17 @@ async function init(args: InitArgs): Promise<number> {
     plan.usesPackage && !project.has(PACKAGE) ? installCommand(project, manager) : null
   const install = installArgs?.join(' ') ?? null
   const env = plan.envKey ? planEnv(project, plan.envKey, id, plan.envFiles) : null
-  say(`invisit: ${plan.label} in ${shown(project.dir)}${plan.usesPackage ? ` (${manager})` : ''}`)
+  printHeader(plan.label, `in ${shown(project.dir)}${plan.usesPackage ? ` (${manager})` : ''}`)
   if (env?.kind === 'present' && env.value !== id) {
-    say(
+    warn(
       `Note: ${env.file} already sets ${plan.envKey}=${env.value}, which is kept; the id passed was ${id}.`,
     )
   }
 
   const blocked = plan.ops.filter((op) => op.step.blocked)
   if (blocked.length > 0) {
-    for (const op of blocked) say(`Could not edit safely: ${op.step.blocked}.`)
-    say('Nothing was changed. The steps, to do by hand:')
+    for (const op of blocked) warn(`Could not edit safely: ${op.step.blocked}.`)
+    say(bold('Nothing was changed. The steps, to do by hand:'))
     say()
     printSteps(
       plan.ops.map((op) => op.step),
@@ -134,39 +148,42 @@ async function init(args: InitArgs): Promise<number> {
   ]
   const doInstall = installArgs !== null && args.install
   if (args.dryRun) {
-    if (doInstall) say(`Would run: ${install}`)
-    for (const change of changes)
-      process.stdout.write(`\n${unifiedDiff(change.path, change.before, change.after)}`)
+    if (doInstall) say(`${dim('Would run:')} ${install}`)
+    for (const change of changes) printDiff(unifiedDiff(change.path, change.before, change.after))
     say()
-    say('Dry run: nothing was changed.')
+    warn('Dry run: nothing was changed.')
     return DONE
   }
   if (interactive && !args.yes) {
-    if (doInstall) say(`Will run: ${install}`)
-    for (const change of changes)
-      say(`Will ${change.before === null ? 'create' : 'update'} ${change.path}`)
+    printPlan(doInstall ? install : null, changes)
     if (!(await confirm('Go ahead?'))) {
-      say('Nothing was changed.')
+      warn('Nothing was changed.')
       return NEEDS_INPUT
     }
+    say()
   }
 
   if (doInstall) {
-    const result = runInstall(project, installArgs)
+    // A prompt left open would echo keys typed during the install over the spinner.
+    closePrompts()
+    const started = Date.now()
+    const stopSpinner = startSpinner(`Installing ${PACKAGE} ${dim(`(${install})`)}`)
+    const result = await runInstall(project, installArgs)
+    stopSpinner()
     if (!result.ok) {
-      say(`Failed: ${install}`)
-      say(result.output.trim().split('\n').slice(-20).join('\n'))
-      say('Nothing else was changed.')
+      fail(`Failed: ${install}`)
+      say(dim(result.output.trim().split('\n').slice(-20).join('\n')))
+      warn('Nothing else was changed.')
       return FAILED
     }
-    say(`installed  ${PACKAGE} (${install})`)
+    const seconds = ((Date.now() - started) / 1000).toFixed(1)
+    status('installed', `${PACKAGE} ${dim(`(${install}, ${seconds}s)`)}`)
   } else if (install) {
-    say(`skipped    ${install} (--no-install); the code needs ${PACKAGE}`)
+    skipped(`${install} (--no-install); the code needs ${PACKAGE}`)
   }
   write(project, changes)
-  for (const change of changes)
-    say(`${change.before === null ? 'created' : 'updated'}    ${change.path}`)
-  if (env?.kind === 'present') say(`kept       ${env.file} (${plan.envKey} is already set)`)
+  for (const change of changes) status(change.before === null ? 'created' : 'updated', change.path)
+  if (env?.kind === 'present') status('kept', `${env.file} (${plan.envKey} is already set)`)
   printFinish(id, plan.envKey, !plan.usesPackage)
   return DONE
 }
@@ -175,14 +192,15 @@ async function main(argv: readonly string[]): Promise<number> {
   const command = parseArgs(argv)
   switch (command.kind) {
     case 'help':
-      process.stdout.write(USAGE)
+      printUsage(USAGE)
       return command.asked ? DONE : NEEDS_INPUT
     case 'version':
       say(VERSION)
       return DONE
     case 'invalid':
-      say(`invisit: ${command.message}`)
-      process.stdout.write(`\n${USAGE}`)
+      fail(`invisit: ${command.message}`)
+      say()
+      printUsage(USAGE)
       return NEEDS_INPUT
     case 'init':
       return init(command.args)

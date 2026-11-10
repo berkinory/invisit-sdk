@@ -1,4 +1,4 @@
-import { spawnSync } from 'node:child_process'
+import { spawn } from 'node:child_process'
 import { PACKAGE } from './constants.ts'
 import type { Manager, Project } from './project.ts'
 
@@ -18,14 +18,24 @@ export function installCommand(project: Project, manager: Manager): readonly str
 export function runInstall(
   project: Project,
   command: readonly string[],
-): { ok: boolean; output: string } {
+): Promise<{ ok: boolean; output: string }> {
   const [bin = 'npm', ...args] = command
-  const result = spawnSync(bin, args, {
-    cwd: project.dir,
-    encoding: 'utf8',
-    // npm, pnpm and yarn are .cmd shims on Windows, which only a shell can start.
-    shell: process.platform === 'win32',
+  return new Promise((resolve) => {
+    const child = spawn(bin, args, {
+      cwd: project.dir,
+      // No stdin: a package manager that asks a question fails instead of hanging behind a spinner.
+      stdio: ['ignore', 'pipe', 'pipe'],
+      // npm, pnpm and yarn are .cmd shims on Windows, which only a shell can start.
+      shell: process.platform === 'win32',
+    })
+    let output = ''
+    for (const stream of [child.stdout, child.stderr]) {
+      stream.setEncoding('utf8')
+      stream.on('data', (chunk: string) => {
+        output += chunk
+      })
+    }
+    child.on('error', (error) => resolve({ ok: false, output: error.message }))
+    child.on('close', (code) => resolve({ ok: code === 0, output }))
   })
-  if (result.error) return { ok: false, output: result.error.message }
-  return { ok: result.status === 0, output: `${result.stdout}${result.stderr}` }
 }

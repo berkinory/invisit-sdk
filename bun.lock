@@ -16,7 +16,7 @@
     },
     "packages/cli": {
       "name": "invisit",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "bin": {
         "invisit": "dist/invisit.js",
       },
