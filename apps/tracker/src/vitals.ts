@@ -10,12 +10,16 @@ interface InteractionEntry extends PerformanceEntry {
 }
 
 export interface ObserverHost {
-  PerformanceObserver?: new (callback: (list: { getEntries(): PerformanceEntry[] }) => void) => {
-    observe(options: { type: string; buffered?: boolean; durationThreshold?: number }): void
-    disconnect(): void
-    takeRecords?(): PerformanceEntry[]
+  PerformanceObserver?: {
+    new (callback: (list: { getEntries(): PerformanceEntry[] }) => void): {
+      observe(options: { type: string; buffered?: boolean; durationThreshold?: number }): void
+      disconnect(): void
+      takeRecords?(): PerformanceEntry[]
+    }
+    readonly supportedEntryTypes?: readonly string[]
   }
   performance?: { getEntriesByType(type: string): PerformanceEntry[]; interactionCount?: number }
+  document?: { visibilityState?: DocumentVisibilityState; prerendering?: boolean }
 }
 
 export interface WebVitalsDeps {
@@ -80,9 +84,9 @@ export function createWebVitals(deps: WebVitalsDeps) {
     type: string,
     options: { buffered?: boolean; durationThreshold?: number },
     onEntries: (entries: PerformanceEntry[]) => void,
-  ): void => {
+  ): boolean => {
     const Observer = deps.host.PerformanceObserver
-    if (!Observer) return
+    if (!Observer) return false
     try {
       const handle = (entries: PerformanceEntry[]): void =>
         onEntries(entries.filter((entry) => entry.startTime >= (deps.since ?? 0)))
@@ -90,7 +94,10 @@ export function createWebVitals(deps: WebVitalsDeps) {
       observer.observe({ type, ...options })
       observers.push(observer)
       handlers.push(handle)
-    } catch {}
+      return true
+    } catch {
+      return false
+    }
   }
 
   const stop = (): void => {
@@ -115,20 +122,37 @@ export function createWebVitals(deps: WebVitalsDeps) {
       const activation = navigation?.activationStart ?? 0
       const sinceOpened = (time: number): number => Math.max(time - activation, 0)
 
+      /* A tab opened in the background first paints when someone switches to it, minutes later,
+         and Chrome times that paint from the navigation. Paints after the page was first hidden
+         are not load speed, so FCP and LCP keep only earlier ones, as web-vitals does. */
+      const doc = deps.host.document
+      const hiddenAtStart = doc?.visibilityState === 'hidden' && !doc.prerendering ? 0 : Infinity
+      const paintedVisible = (entries: PerformanceEntry[]): PerformanceEntry[] => {
+        const hidden =
+          deps.host.performance
+            ?.getEntriesByType('visibility-state')
+            .find((entry) => entry.name === 'hidden' && entry.startTime >= activation)?.startTime ??
+          hiddenAtStart
+        return entries.filter((entry) => entry.startTime < hidden)
+      }
+
       observe('largest-contentful-paint', { buffered: true }, (entries) => {
-        const last = entries[entries.length - 1]
+        const painted = paintedVisible(entries)
+        const last = painted[painted.length - 1]
         if (last) measured.set('LCP', sinceOpened(last.startTime))
       })
 
       observe('paint', { buffered: true }, (entries) => {
-        for (const entry of entries) {
+        for (const entry of paintedVisible(entries)) {
           if (entry.name === 'first-contentful-paint') {
             measured.set('FCP', sinceOpened(entry.startTime))
           }
         }
       })
 
-      observe('layout-shift', { buffered: true }, (entries) => {
+      // A page that never shifted scores 0; leaving it out would count only the pages that did.
+      const shifts = deps.host.PerformanceObserver?.supportedEntryTypes?.includes('layout-shift')
+      const observingShifts = observe('layout-shift', { buffered: true }, (entries) => {
         for (const entry of entries as LayoutShiftEntry[]) {
           if (entry.hadRecentInput === true) continue
           const value = entry.value ?? 0
@@ -147,6 +171,7 @@ export function createWebVitals(deps: WebVitalsDeps) {
           measured.set('CLS', clsValue)
         }
       })
+      if (observingShifts && shifts && !measured.has('CLS')) measured.set('CLS', 0)
 
       observe('event', { buffered: true, durationThreshold: 0 }, recordInteractions)
       observe('first-input', { buffered: true }, recordInteractions)

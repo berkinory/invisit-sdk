@@ -32,7 +32,9 @@ const BUNDLES: { entry: string; file: string; budgets: Sizes }[] = [
   {
     entry: 'extras-browser.ts',
     file: 'invisit-extras.js',
-    budgets: { raw: 2_080, gzip: 1_152, brotli: 1_056 },
+    // Raised 2026-11-10 from 2,080 / 1,152 / 1,056 to drop paints of tabs opened in the background
+    // and score pages that never shifted as CLS 0: measured 2,462 / 1,306 / 1,182.
+    budgets: { raw: 2_496, gzip: 1_344, brotli: 1_216 },
   },
   {
     entry: 'notices-browser.ts',
