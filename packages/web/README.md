@@ -570,6 +570,7 @@ import type {
 
 ## Related
 
+- [Changelog](https://invisit.dev/docs/reference/changelog#invisitdevweb): what changed in each release, with its date.
 - [`@invisitdev/server`](https://www.npmjs.com/package/@invisitdev/server): first-party proxy, crawler analytics and server-side events.
 - [Source](https://github.com/berkinory/invisit-sdk): every published version is built from this repository with npm provenance.
 

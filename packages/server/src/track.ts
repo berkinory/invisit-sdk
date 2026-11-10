@@ -1,5 +1,5 @@
 import { bareAddress } from './client-ip.ts'
-import { authorization, type Context } from './context.ts'
+import { authorization, SDK_VERSION, SDK_VERSION_HEADER, type Context } from './context.ts'
 import { errorFromResponse, InvisitError } from './errors.ts'
 
 /* The collector's own Accept-Language bound; only the first tag matters to it. */
@@ -129,7 +129,11 @@ export async function trackEvent(
   try {
     response = await context.fetch(`${context.baseUrl}/v1/server/events`, {
       method: 'POST',
-      headers: { authorization: authorization(context), 'content-type': 'application/json' },
+      headers: {
+        authorization: authorization(context),
+        'content-type': 'application/json',
+        [SDK_VERSION_HEADER]: SDK_VERSION,
+      },
       body: JSON.stringify(body),
     })
   } catch (error) {

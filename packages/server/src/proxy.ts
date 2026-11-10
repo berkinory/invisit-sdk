@@ -1,4 +1,4 @@
-import { authorization, type Context } from './context.ts'
+import { authorization, SDK_VERSION, SDK_VERSION_HEADER, type Context } from './context.ts'
 
 export const DEFAULT_PREFIX = '/_i'
 
@@ -68,6 +68,7 @@ function upstreamHeaders(context: Context, request: Request): Headers {
   // Asked for explicitly, or the runtime's fetch would ask for gzip on its own.
   headers.set('accept-encoding', 'identity')
   headers.set('authorization', authorization(context))
+  headers.set(SDK_VERSION_HEADER, SDK_VERSION)
   const ip = context.clientIp(request)
   if (ip !== null) headers.set('x-invisit-client-ip', ip)
   else context.noteUnresolvedIp()

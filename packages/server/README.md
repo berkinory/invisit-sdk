@@ -877,6 +877,7 @@ You are using `handle`, which runs before the page. Use `proxy` before and `craw
 
 ## Related
 
+- [Changelog](https://invisit.dev/docs/reference/changelog#invisitdevserver): what changed in each release, with its date.
 - [`@invisitdev/web`](https://www.npmjs.com/package/@invisitdev/web): the browser tracker as an ES module.
 - [Source](https://github.com/berkinory/invisit-sdk): every published version is built from this repository with npm provenance.
 

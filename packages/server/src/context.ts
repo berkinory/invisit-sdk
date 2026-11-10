@@ -1,3 +1,5 @@
+import { version as PACKAGE_VERSION } from '../package.json'
+
 export type Fetch = (input: string, init: RequestInit) => Promise<Response>
 
 export interface Context {
@@ -12,3 +14,8 @@ export interface Context {
 }
 
 export const authorization = (context: Context): string => `Bearer ${context.key}`
+
+/* Lets the collector tell a site when its release has fallen behind; it is not trusted for anything
+   else. */
+export const SDK_VERSION_HEADER = 'x-invisit-sdk-version'
+export const SDK_VERSION: string = PACKAGE_VERSION

@@ -1,5 +1,5 @@
 import { isbot } from 'isbot'
-import { authorization, type Context } from './context.ts'
+import { authorization, SDK_VERSION, SDK_VERSION_HEADER, type Context } from './context.ts'
 import { errorFromResponse } from './errors.ts'
 
 /* A loose first pass: the collector classifies each hit itself and drops what is not a crawler. */
@@ -49,7 +49,11 @@ export async function recordCrawler(
   try {
     const response = await context.fetch(`${context.baseUrl}/v1/crawls`, {
       method: 'POST',
-      headers: { authorization: authorization(context), 'content-type': 'application/json' },
+      headers: {
+        authorization: authorization(context),
+        'content-type': 'application/json',
+        [SDK_VERSION_HEADER]: SDK_VERSION,
+      },
       body: JSON.stringify({
         hits: [
           {

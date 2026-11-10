@@ -10,13 +10,13 @@ The code that runs on your site and your server for [invisit](https://invisit.de
 
 ## Packages
 
-| Package                                  | Description                                                                            | Docs                                       |
-| ---------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------ |
-| [`@invisitdev/web`](packages/web)        | The browser tracker as a typed, SSR-safe ES module, for any framework.                 | [README](packages/web/README.md)           |
-| [`@invisitdev/server`](packages/server)  | First-party tracker proxy, crawler analytics and server-side events, on web standards. | [README](packages/server/README.md)        |
-| [`invisit`](packages/cli)                | The installer: `npx invisit init` adds the tracker to a web project.                   | [README](packages/cli/README.md)           |
-| [`apps/tracker`](apps/tracker)           | The tracker source. `invisit.js` and its optional chunks are built from it.            | Not published to npm                       |
-| [`plugins/wordpress`](plugins/wordpress) | The WordPress plugin: adds the tracker to a WordPress site, with settings in wp-admin. | [readme.txt](plugins/wordpress/readme.txt) |
+| Package                                  | Description                                                                            | Docs                                                                           |
+| ---------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| [`@invisitdev/web`](packages/web)        | The browser tracker as a typed, SSR-safe ES module, for any framework.                 | [README](packages/web/README.md), [Changelog](packages/web/CHANGELOG.md)       |
+| [`@invisitdev/server`](packages/server)  | First-party tracker proxy, crawler analytics and server-side events, on web standards. | [README](packages/server/README.md), [Changelog](packages/server/CHANGELOG.md) |
+| [`invisit`](packages/cli)                | The installer: `npx invisit init` adds the tracker to a web project.                   | [README](packages/cli/README.md)                                               |
+| [`apps/tracker`](apps/tracker)           | The tracker source. `invisit.js` and its optional chunks are built from it.            | Not published to npm                                                           |
+| [`plugins/wordpress`](plugins/wordpress) | The WordPress plugin: adds the tracker to a WordPress site, with settings in wp-admin. | [readme.txt](plugins/wordpress/readme.txt)                                     |
 
 ## Quick start
 
@@ -102,6 +102,8 @@ Publishing is automated by [`publish.yml`](.github/workflows/publish.yml):
 1. A push to `main` checks each package's `package.json` version against npm.
 2. A version npm does not have yet is built from this commit and published. Versions with a prerelease suffix (`1.2.0-beta.1`) go to the `next` dist-tag, all others to `latest`.
 3. The commit is tagged `web-v<version>`, `server-v<version>` or `cli-v<version>`.
+
+What changed in each release, with its date, is in each package's `CHANGELOG.md` and on the [docs changelog](https://invisit.dev/docs/reference/changelog).
 
 Releases use npm [trusted publishing](https://docs.npmjs.com/trusted-publishers) over OIDC. No npm token exists anywhere, and every version carries a signed [provenance statement](https://docs.npmjs.com/generating-provenance-statements) linking it to the exact commit and workflow run that built it.
 
