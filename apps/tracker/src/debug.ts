@@ -23,6 +23,7 @@ const PROBLEMS: Record<string, string> = {
   bot_headless: 'Seen as a headless browser',
   bot_missing_user_agent: 'Sent without a user agent',
   bot_automation_hint: 'Seen as automation',
+  bot_datacenter: 'Sent from a datacenter network',
   fetch_metadata_mismatch: 'Browser signals look automated',
   prefetch_request: 'Sent as a prefetch',
   gpc_opt_out: 'Global Privacy Control is on',
