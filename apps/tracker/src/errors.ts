@@ -107,6 +107,17 @@ export function parseStack(stack: string): ErrorFrame[] {
 
 const FOREIGN_FILE = /^(?:[a-z-]+-extension|webkit-masked-url|extension):/i
 
+/* One-liners iOS browsers evaluate into the document from native code: Brave's wallet assigns
+   window.ethereum.selectedAddress before any provider exists, and Brave and Firefox inherit the
+   __firefox__ user-script namespace. WebKit files them under the page's own address, so only the
+   text, read before scrubbing hides it, tells them from the site's inline scripts. */
+const HOST_SCRIPT = /ethereum\.selectedAddress =|__firefox__/
+
+const isHostScript = (raw: RawError, said: unknown, pageUrl: string): boolean =>
+  raw.kind === 'error' &&
+  HOST_SCRIPT.test(String(said ?? raw.text)) &&
+  bareUrl(raw.file ?? '') === bareUrl(pageUrl)
+
 const siteOf = (host: string): string => host.split('.').slice(-2).join('.')
 
 function loadFailure(
@@ -279,7 +290,11 @@ export function createErrors(
       if (report === undefined) {
         if (known.size === MAX_DISTINCT_PER_PAGE) return
         const described =
-          raw.kind === 'resource' ? loadFailure(raw, win.location.hostname) : describe(raw)
+          raw.kind === 'resource'
+            ? loadFailure(raw, win.location.hostname)
+            : isHostScript(raw, said, win.location.href)
+              ? null
+              : describe(raw)
         const top = described?.frames.find((frame) => frame.file)?.file
         const kept = described && !(top && FOREIGN_FILE.test(top))
         report = kept ? { ...described, count: 0, occurred_at: '', page: '' } : null

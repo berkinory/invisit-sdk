@@ -63,10 +63,12 @@ const BUNDLES: { entry: string; file: string; budgets: Sizes }[] = [
     file: 'invisit-debug.js',
     budgets: { raw: 7_424, gzip: 3_456, brotli: 3_008 },
   },
+  // Raised 2026-11-21 for dropping what Brave and Firefox on iOS evaluate into the page, which
+  // reaches the dashboard as the site's own code: measured 4,404 / 2,297 / 2,095.
   {
     entry: 'errors-browser.ts',
     file: 'invisit-errors.js',
-    budgets: { raw: 4_256, gzip: 2_240, brotli: 2_048 },
+    budgets: { raw: 4_416, gzip: 2_304, brotli: 2_112 },
   },
 ]
 
